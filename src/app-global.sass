@@ -1,0 +1,295 @@
+// global stylesheet(sass) for JOED5
+$text-color: #000000
+$warning-color: #ff0000
+$notice-color:  #ff6600
+$system-background: #dddddd
+$--background-color-list: #FFFFFF
+$--backgrouud-color-dialog: #FFFFF0
+$--background-color-hover: #F5F7FA
+
+// imported from custom theme for element
+$--color-primary: #4A4A4A
+$--color-text-primary: #121212
+$--color-text-regular: #252525
+$--color-danger: #FF3030
+$--border-color-base: #7B7B7B
+$--color-info: #22AAFF
+$--color-warning: #FF8F25
+$--color-text-placeholder: #C0C4CC
+
+html
+  font-family: cross-platform-yu-gothic, sans-serif
+  font-weight: 500
+  background-color: $system-background
+  font-size: 14px
+  color: $--color-text-primary
+  letter-spacing: 0.2px
+  overflow-y: auto
+  user-select: none
+
+button
+  font-family: inherit
+  font-size: 1rem
+  height: 2.8rem
+
+input[type="text"]
+  font-family: inherit
+  font-size: 1rem
+  user-select: text
+  box-sizing: border-box
+  padding: 2px 5px
+  height: 2rem
+  border: 1px solid $--border-color-base
+  border-radius: 2px
+input[type="number"]
+  font-family: inherit
+  font-size: 1rem
+  user-select: text
+  box-sizing: border-box
+  padding: 2px 5px
+  height: 2rem
+  border: 1px solid $--border-color-base
+  border-radius: 2px
+
+select
+  font-family: inherit
+  font-size: 1rem
+  -webkit-appearance: menulist-button
+  box-sizing: border-box
+  min-height: 1.5rem
+  border: 1px solid $--border-color-base
+  border-radius: 2px
+  padding: 2px
+
+
+option
+  font-family: inherit
+  font-size: 1rem
+  box-sizing: border-box
+  margin-top: 0.2rem
+  padding: 0.2rem 0.4rem
+  height: 1.8rem
+option:hover
+  background-color: $--background-color-hover
+option:checked
+  font-weight: 600
+  color: red
+  background-color: $--color-primary
+
+// タイトル文字
+.title-section
+  font-size: 1.35rem
+  font-weight: bold
+  letter-spacing: 0.05rem
+
+.subtitle-section
+  font-size: 1.15rem
+  font-weight: bold
+  letter-spacing: 0.05rem
+
+// 省略可能span
+.truncatable
+  display: inline-block
+  overflow: hidden
+  white-space: nowrap
+  text-overflow: ellipsis
+
+// ％指定幅のブロック
+.w10
+  width: 10%
+.w20
+  width: 20%
+.w30
+  width: 30%
+.w40
+  width: 40%
+.w50
+  width: 50%
+.w60
+  width: 60%
+.w70
+  width: 70%
+.w80
+  width: 80%
+.w90
+  width: 90%
+
+// ダイアログ形式
+.w600p
+  width: 600px
+  margin-left: 148px
+.w800p
+  width: 800px
+  margin-left: 48px
+div.app-dialog
+  position: relative
+  border: 1px black solid
+  border-radius: 0.5rem
+  background-color: ivory
+  margin-top: 3rem
+  padding: 1rem 1.5rem
+  display: flex
+  flex-direction: column
+div.app-dialog-row
+  position: relative
+  border: 1px black solid
+  border-radius: 0.5rem
+  background-color: ivory
+  margin-top: 3rem
+  padding: 1rem 1.5rem
+  display: flex
+  flex-direction: row
+
+// カスタムボタン
+
+.new-entry-button
+  position: absolute
+  right: 5px
+  bottom: 5px
+  width: 30px
+  height: 30px
+  border: 2px solid $--color-primary
+  border-radius: 5px
+  background: $--background-color-list
+  &::after
+    content: '\e6d9'
+    font-family: 'element-icons'
+    color: $--color-primary
+    font-size: 25px
+    padding-top: 6px
+    padding-left: 3px
+  &:hover
+    border-color: $--color-text-regular
+    &::after
+      color: $--color-text-regular
+
+.open-drawer-button
+  position: absolute
+  right: 5px
+  bottom: 5px
+  width: 30px
+  height: 30px
+  &::after
+    content: '\e798'
+    color: $--color-primary
+    font-family: 'element-icons'
+    font-size: 25px
+    padding-top: 6px
+    padding-left: 3px
+  &:hover
+    &::after
+      color: $--color-text-regular
+
+// EditSection... の共通スタイル
+//
+// SECTION
+//   list-item
+//     [handle] [item-description]
+div.section
+  position: relative
+  background: white
+  width: 800px
+  min-height: 48px
+  border: 1px solid black
+  margin-top: 21px
+  padding-bottom: 4px
+  .section-title
+    margin: 4px
+    font-size: 1.15rem
+      
+  div.section-item-list
+    border: 0
+    margin: 1px 8px 2px 42px
+    div.section-item
+      position: relative
+      background: #eeeeee
+      border-left: #eeeeee 2px solid
+      line-height: 1.5
+      padding: 0.5em
+      margin-right: 48px
+      margin-bottom: 2px
+      list-style: none
+      .handle
+        margin-right: 0.7rem
+      .edit-button
+        position: absolute
+        font-size: 1.25rem
+        right: 50px
+        margin-top: auto
+        margin-bottom: auto
+        padding-top: 0.1rem
+      .remove-button
+        position: absolute
+        font-size: 1.25rem
+        right: 20px
+        margin-top: auto
+        margin-bottom: auto
+        padding-top: 0.1rem
+  div.section-item-list:first-of-type div.section-item:first-of-type
+      border-left: black 2px solid
+
+// EditItem... の編集ビュー部分での共通スタイル
+// <div class="edititem-overlay">
+//   <div class="edititem-overlay-content">
+//     モーダルダイアログの内容を記載
+//     <div class="content-title" />
+//     <div class="flex-content" />
+//             ...
+//     <div class="flex-content" />
+//     <div class="content-bottom" />
+//   </div>
+// </div>
+div.edititem-overlay
+  z-index: 99
+  position: fixed !important
+  top: 0
+  left: 0
+  bottom: 0
+  right: 0
+  background-color: rgba(0,0,0,0.1)
+  align-item: center
+  justify-content: center
+  padding-left: 40px
+  overflow-y: auto
+
+div.edititem-overlay-content
+  position: relative
+  display: block
+  background: white
+  width: 800px
+  border: 4px solid gray
+  border-radius: 10px
+  margin: 120px 18px
+  padding: 16px
+div.content-title
+  padding: 8px
+  font-size: 1.15rem
+  font-weight: bold
+  letter-spacing: 2px
+div.flex-content
+  display: flex
+  flex-direction: row
+  padding-top: 0.2rem
+  padding-bottom: 0.2rem
+div.selectionbox
+  padding: 4px
+  margin: 4px 0.5rem
+  min-height: 2rem
+  line-height: 2rem
+  select
+    width: 100%
+div.inputbox
+  margin: 2px 16px
+  height: 40px
+  flex-direction: row
+  & > div
+    margin: auto 0
+  input
+    width: 95%
+div.content-bottom
+  div.controls
+    padding-left: 8px
+    padding-right: 8px
+    text-align: right
+    margin: 2px 0
+    height: 2.5em
