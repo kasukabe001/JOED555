@@ -7,11 +7,15 @@ const MD5salt = 0x76b3
 export default {
   namespaced: true,
   state: {
-    Authenticated: false
+    Authenticated: false,
+    PasswordRequired: true
   },
   mutations: {
     SetStatus (state, payload) {
       state.Authenticated = payload
+    },
+    SetCurrentPasswordRequirement (state, payload) {
+      state.PasswordRequired = payload
     }
   },
   getters: {
@@ -33,7 +37,14 @@ export default {
           { Password: { $exists: true } },
           (error, document) => {
             if (error) reject(error)
-            if (document === null || document.Password === HHX.h64(payload, MD5salt).toString(16)) {
+            // パスワード設定無し
+            if (document === null) {
+              context.commit('SetCurrentPasswordRequirement', false)
+              context.commit('SetStatus', true)
+              resolve()
+            }
+
+            if (document.Password === HHX.h64(payload, MD5salt).toString(16)) {
               context.commit('SetStatus', true)
               resolve()
             } else {
@@ -58,6 +69,7 @@ export default {
             { multi: false },
             (error) => {
               if (error) reject(error)
+              context.commit('SetCurrentPasswordRequirement', false)
             }
           )
         } else {

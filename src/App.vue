@@ -8,6 +8,7 @@
 export default {
   created () {
     this.$store.commit('onCreated')
+    // this.$router.push('/') // comment out in Electron environment
   },
   computed: {
     routeKey () {

@@ -69,10 +69,10 @@ import DbItems from '@/modules/DbItemHandler'
 import SectionDiagnoses from '@/components/SectionDiagnoses'
 import SectionProcedures from '@/components/SectionProcedures'
 import SectionAEs from '@/components/SectionAEs'
-import InputTextField from '@/components/InputTextField'
-import InputNumberField from '@/components/InputNumberField'
-import InputProcedureTime from '@/components/InputProcedureTime'
-import InputDateOfProcedure from '@/components/InputDateOfProcedure'
+import InputTextField from '@/components/Molecules/InputTextField'
+import InputNumberField from '@/components/Molecules/InputNumberField'
+import InputProcedureTime from '@/components/Molecules/InputProcedureTime'
+import InputDateOfProcedure from '@/components/Molecules/InputDateOfProcedure'
 import { ZenToHan } from '@/modules/ZenHanChars'
 import Popups from '@/modules/Popups'
 
@@ -380,8 +380,4 @@ div.edit-controls
   justify-content: flex-end
   & > div
     margin-left: 0.2rem
-
-.vacant
-  border-color: red !important
-  padding: 2px
 </style>

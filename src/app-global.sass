@@ -4,7 +4,7 @@ $warning-color: #ff0000
 $notice-color:  #ff6600
 $system-background: #dddddd
 $--background-color-list: #FFFFFF
-$--backgrouud-color-dialog: #FFFFF0
+$--background-color-dialog: #FFFFF0
 $--background-color-hover: #F5F7FA
 
 // imported from custom theme for element
@@ -32,16 +32,7 @@ button
   font-size: 1rem
   height: 2.8rem
 
-input[type="text"]
-  font-family: inherit
-  font-size: 1rem
-  user-select: text
-  box-sizing: border-box
-  padding: 2px 5px
-  height: 2rem
-  border: 1px solid $--border-color-base
-  border-radius: 2px
-input[type="number"]
+input[type="text"],[type="number"],[type="password"]
   font-family: inherit
   font-size: 1rem
   user-select: text
@@ -61,7 +52,6 @@ select
   border-radius: 2px
   padding: 2px
 
-
 option
   font-family: inherit
   font-size: 1rem
@@ -75,6 +65,11 @@ option:checked
   font-weight: 600
   color: red
   background-color: $--color-primary
+
+// input, selectで使用される強調クラス
+.vacant
+  border-color: red !important
+  padding: 2px
 
 // タイトル文字
 .title-section

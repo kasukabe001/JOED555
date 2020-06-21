@@ -8,6 +8,7 @@
         <div class="w80">
           <!-- <select :value="Category" @change="Category = $event.target.value, OnCategoryChanged()"> -->
           <select v-model="Category" @change="OnCategoryChanged()">
+            <option :value="undefined" disabled style="display:none;">クリックしてリストから選択</option>
             <option value="出血">総出血量500ml以上</option>
             <option value="術中手術操作">術中手術操作に伴う合併症・偶発症</option>
             <option value="気腹・潅流操作">気腹・潅流操作に伴う合併症・偶発症</option>
@@ -517,6 +518,7 @@
         </div>
         <div class="w80">
           <select v-model="AE.Grade">
+            <option :value="undefined" disabled style="display:none;">クリックしてリストから選択</option>
             <option value="1">Grade 1: 正常な術後経過からの逸脱</option>
             <option value="2">Grade 2: 中等症 &nbsp; 輸血および中心静脈栄養を要する場合を含む</option>
             <option value="3a">Grade 3a: 全身麻酔を要さない治療介入を要する</option>
@@ -531,88 +533,98 @@
           <span>転帰</span>
         </div>
         <div class="w80">
-          <el-divider class="AE" content-position="left">Grade 1-2相当</el-divider>
-          <div>
-            <label>
-              <input type="checkbox" v-model="AE.Course" value="経過観察">
-              経過観察
-            </label>
-            <label>
-              <input type="checkbox" v-model="AE.Course" value="周術期管理の延長">
-              抗菌薬投与など周術期管理の延長
-            </label>
-            <label>
-              <input type="checkbox" v-model="AE.Course" value="入院期間の延長">
-              入院期間の延長
-            </label>
-            <label>
-              <input type="checkbox" v-model="AE.Course" value="再入院">
-              再入院
-            </label>
+          <div v-show="ShowByGrading(1)">
+            <el-divider class="AE" content-position="left">Grade 1-2相当</el-divider>
+            <div>
+              <label>
+                <input type="checkbox" v-model="AE.Course" value="経過観察">
+                経過観察
+              </label>
+              <label>
+                <input type="checkbox" v-model="AE.Course" value="周術期管理の延長">
+                抗菌薬投与など周術期管理の延長
+              </label>
+              <label>
+                <input type="checkbox" v-model="AE.Course" value="入院期間の延長">
+                入院期間の延長
+              </label>
+              <label>
+                <input type="checkbox" v-model="AE.Course" value="再入院">
+                再入院
+              </label>
+            </div>
           </div>
 
-          <el-divider class="AE" content-position="left">Grade 2相当</el-divider>
-          <div>
-            <label>
-              <input type="checkbox" v-model="AE.Course" value="自己血輸血・術中回収血">
-              輸血～自己血輸血・術中回収血
-            </label>
-            <label>
-              <input type="checkbox" v-model="AE.Course" value="輸血・血液製剤">
-              輸血・血液製剤
-            </label>
+          <div v-show="ShowByGrading(2)">
+            <el-divider class="AE" content-position="left">Grade 2相当</el-divider>
+            <div>
+              <label>
+                <input type="checkbox" v-model="AE.Course" value="自己血輸血・術中回収血">
+                輸血～自己血輸血・術中回収血
+              </label>
+              <label>
+                <input type="checkbox" v-model="AE.Course" value="輸血・血液製剤">
+                輸血・血液製剤
+              </label>
+            </div>
           </div>
 
-          <el-divider class="AE" content-position="left">Grade 3相当</el-divider>
-          <div>
-            <label>
-              <input type="checkbox" v-model="AE.Course" value="術中の追加手術～腹腔鏡">
-              術中の追加手術～腹腔鏡
-            </label>
-            <label>
-              <input type="checkbox" v-model="AE.Course" value="術中の追加手術～子宮鏡">
-              術中の追加手術～子宮鏡
-            </label>
-            <label>
-              <input type="checkbox" v-model="AE.Course" value="術中の追加手術～開腹">
-              術中の追加手術～開腹
-            </label>
-          </div>
-          <div>
-            <label>
-              <input type="checkbox" v-model="AE.Course" value="術後の再手術～開腹">
-              術後の再手術～開腹
-            </label>
-            <label>
-              <input type="checkbox" v-model="AE.Course" value="術後の再手術～腹腔鏡">
-              術後の再手術～腹腔鏡
-            </label>
-            <label>
-              <input type="checkbox" v-model="AE.Course" value="術後の再手術～子宮鏡">
-              術後の再手術～子宮鏡
-            </label>
-          </div>
-          <div>
-            <label>
-              <input type="checkbox" v-model="AE.Course" value="そのほか再手術">
-              そのほか術後のIVRを含む再手術
-            </label>
-          </div>
-
-          <el-divider class="AE" content-position="left">Grade 4</el-divider>
-          <div>
-            <label>
-              <input type="checkbox" v-model="AE.Course" value="合併症管理のためのICU入室">
-              合併症管理のためのICU入室
-            </label>
+          <div v-show="ShowByGrading(3)">
+            <el-divider class="AE" content-position="left">Grade 3相当</el-divider>
+            <div>
+              <label>
+                <input type="checkbox" v-model="AE.Course" value="術中の追加手術～腹腔鏡">
+                術中の追加手術～腹腔鏡
+              </label>
+              <label>
+                <input type="checkbox" v-model="AE.Course" value="術中の追加手術～子宮鏡">
+                術中の追加手術～子宮鏡
+              </label>
+              <label>
+                <input type="checkbox" v-model="AE.Course" value="術中の追加手術～開腹">
+                術中の追加手術～開腹
+              </label>
+            </div>
+            <div>
+              <label>
+                <input type="checkbox" v-model="AE.Course" value="術後の再手術～開腹">
+                術後の再手術～開腹
+              </label>
+              <label>
+                <input type="checkbox" v-model="AE.Course" value="術後の再手術～腹腔鏡">
+                術後の再手術～腹腔鏡
+              </label>
+              <label>
+                <input type="checkbox" v-model="AE.Course" value="術後の再手術～子宮鏡">
+                術後の再手術～子宮鏡
+              </label>
+            </div>
+            <div>
+              <label>
+                <input type="checkbox" v-model="AE.Course" value="そのほか再手術">
+                そのほか術後のIVRを含む再手術
+              </label>
+            </div>
           </div>
 
-          <el-divider class="AE" content-position="left">Grade 5</el-divider>
-          <div>
-            <label>
-              <input type="checkbox" v-model="AE.Course" value="死亡">
-              死亡
-            </label>
+          <div v-show="ShowByGrading(4)">
+            <el-divider class="AE" content-position="left">Grade 4</el-divider>
+            <div>
+              <label>
+                <input type="checkbox" v-model="AE.Course" value="合併症管理のためのICU入室">
+                合併症管理のためのICU入室
+              </label>
+            </div>
+          </div>
+
+          <div v-show="ShowByGrading(5)">
+            <el-divider class="AE" content-position="left">Grade 5</el-divider>
+            <div>
+              <label>
+                <input type="checkbox" v-model="AE.Course" value="死亡">
+                死亡
+              </label>
+            </div>
           </div>
         </div>
       </div>
@@ -689,6 +701,12 @@ export default {
         (this.AE.Title.findIndex((s) => s === '臓器損傷') >= 0) ||
         (this.AE.Title.findIndex((s) => s === '出血') >= 0)
       )
+    },
+    ShowByGrading () {
+      const self = this
+      return function (value) {
+        return ((self.AE.Grade ? Number(self.AE.Grade[0]) : 0) >= value)
+      }
     }
   },
   methods: {

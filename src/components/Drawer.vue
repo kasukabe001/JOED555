@@ -2,14 +2,11 @@
   <div class="drawer-content">
     <div class="drawer-alignright"><i class="el-icon-close" @click="CloseDrawer"></i></div>
     <el-collapse accordion @change="AccordionChanged" :value="1">
-      <el-collapse-item title="表示の順番" :name="1">
-        <SortMenu></SortMenu>
-      </el-collapse-item>
-      <el-collapse-item title="表示のフィルタ" :name="2">
-        <FilterMenu></FilterMenu>
+      <el-collapse-item title="表示の設定" :name="1">
+        <DisplaySettingMenu></DisplaySettingMenu>
       </el-collapse-item>
       <el-collapse-item title="検索" :name="10">
-        <input type="text" />
+        <SearchMenu></SearchMenu>
       </el-collapse-item>
       <el-collapse-item title="ユーティリティ" :name="99">
       </el-collapse-item>
@@ -18,13 +15,13 @@
 </template>
 
 <script>
-import SortMenu from '@/components/SortMenu'
-import FilterMenu from '@/components/FilterMenu'
+import DisplaySettingMenu from '@/components/DisplaySettingMenu'
+import SearchMenu from '@/components/SearchMenu'
 
 export default {
   name: 'Drawer',
   components: {
-    SortMenu, FilterMenu
+    DisplaySettingMenu, SearchMenu
   },
   methods: {
     CloseDrawer () {
@@ -32,7 +29,7 @@ export default {
     },
     AccordionChanged (value) {
       if (value === 99) {
-        this.$router.push({ name: 'utilities' })
+        this.$router.push({ name: 'settings' })
       }
     }
   }
@@ -48,4 +45,17 @@ export default {
   font-size: 1rem !important
 .drawer-alignright
   text-align: right
+div.menu-item-content
+  display: flex
+  flex-direction: column
+  & > div
+    height: 2.6rem
+  select
+    width: 80%
+    margin: 0.3rem 0
+    height: 2rem
+  input
+    width: 80%
+    height: 2rem
+
 </style>

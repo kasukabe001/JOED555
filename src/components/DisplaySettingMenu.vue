@@ -1,0 +1,84 @@
+<template>
+  <div class="menu-item">
+        <div class="menu-item-content">
+      <div>
+        <select v-model="SortItem">
+          <option value="SequentialId">登録順</option>
+          <option value="DateOfProcedure">手術日</option>
+          <option value="ProcedureTime">手術時間</option>
+          <option value="TypeOfProcedure">カテゴリ</option>
+          <option value="Age">年齢</option>
+          <option value="InstitutionalPatientId">施設の患者ID</option>
+        </select>
+      </div>
+
+      <el-switch
+        v-model="SortOrder"
+        active-text="昇順"
+        :active-value="1"
+        active-color="#444444"
+        inactive-text="降順"
+        :inactive-value="-1"
+        inactive-color="#444444" />
+    </div>
+    <div class="menu-item-content">
+      <el-select v-model="FilterItems" multiple placeholder="全て表示する">
+        <el-option-group label="カテゴリ">
+          <el-option :value="{ field: 'TypeOfProcedure', value: '腹腔鏡' }" label="腹腔鏡" />
+          <el-option :value="{ field: 'TypeOfProcedure', value: '腹腔鏡悪性' }" label="腹腔鏡悪性" />
+          <el-option :value="{ field: 'TypeOfProcedure', value: 'ロボット' }" label="ロボット" />
+          <el-option :value="{ field: 'TypeOfProcedure', value: 'ロボット悪性' }" label="ロボット悪性" />
+          <el-option :value="{ field: 'TypeOfProcedure', value: '子宮鏡' }" label="子宮鏡" />
+          <el-option :value="{ field: 'TypeOfProcedure', value: '卵管鏡' }" label="卵管鏡" />
+        </el-option-group>
+        <el-option-group label="情報">
+          <el-option :value="{ field: 'PresentAE', value: true }" label="合併症あり" />
+          <el-option :value="{ field: 'Notification', value: true }" label="警告あり" />
+        </el-option-group>
+      </el-select>
+    </div>
+    <div class="menu-item-bottom">
+      <el-button type="primary" @click="Apply()">設定</el-button>
+      <el-button type="success"  @click="Revert()">初期設定に戻す</el-button>
+    </div>
+  </div>
+</template>
+
+<script>
+export default {
+  name: 'DisplaySettingMenu',
+  data () {
+    return ({
+      SortItem: 'SequentialId',
+      SortOrder: 1,
+      FilterItems: []
+    })
+  },
+  methods: {
+    Apply () {
+      const filterObj = {}
+      for (const item of this.FilterItems) {
+        if (filterObj[item.field] === undefined) {
+          filterObj[item.field] = item.value
+        } else {
+          if (filterObj[item.field].$in) {
+            filterObj[item.field].$in.push(item.value)
+          } else {
+            filterObj[item.field] = { $in: [filterObj[item.field], item.value] }
+          }
+        }
+      }
+
+      this.$store.commit('SetSortOrders', { [this.SortItem]: Number(this.SortOrder) })
+      this.$store.commit('SetFilters', filterObj)
+      this.$store.dispatch('ReloadDatastore')
+    },
+    Revert () {
+      this.SortItem = 'SequentialId'
+      this.SortOrder = 1
+      this.FilterItems.splice(0)
+      this.Apply()
+    }
+  }
+}
+</script>

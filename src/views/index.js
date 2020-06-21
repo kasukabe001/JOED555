@@ -61,22 +61,23 @@ const routes = [
     children: [
       {
         name: 'settings',
-        path: 'settings',
-        component: ViewSettings
+        path: '/utilities/settings',
+        component: ViewSettings,
+        alias: ''
       },
       {
-        name: 'export',
-        path: 'export',
+        name: 'exportdata',
+        path: '/utilities/exportdata',
         component: ViewExport
       },
       {
-        name: 'import',
-        path: 'import',
+        name: 'importdata',
+        path: '/utilities/importdata',
         component: ViewImport
       },
       {
         name: 'about',
-        path: 'about',
+        path: '/utilities/about',
         component: ViewAbout
       }
     ]
