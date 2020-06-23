@@ -3,6 +3,8 @@ import App from './App.vue'
 import router from './router'
 import store from './store'
 import './plugins/element.js'
+import './cross-plathome-yu-gothic.css'
+import './app-global.sass'
 
 Vue.config.productionTip = false
 

@@ -1,17 +1,17 @@
 <template>
-  <div class="caseitem" @dblclick="MoveToEditView()">
-    <CaseCategoryIdentifier :category="CaseCategory"></CaseCategoryIdentifier>
+  <div class="caseitem" :id="'case-'+uid" tabindex="0" @dblclick="MoveToEditView()">
+    <CategoryIdentifier :category="Category"></CategoryIdentifier>
     <div class="caseitem-description">
       <div class="caseitem-row">
-        <span class="w20"> {{CaseDate}} </span>
-        <span class="w20"> {{CasePersonalInformation.Id}} </span>
-        <span class="w40 truncatable"> {{CasePersonalInformation.Name}} </span>
-        <span class="w20"> ( {{CasePersonalInformation.Age}}歳 ) </span>
+        <span class="w20"> {{DateOfProcedure}} </span>
+        <span class="w20"> {{PersonalInformation.Id}} </span>
+        <span class="w40 truncatable"> {{PersonalInformation.Name}} </span>
+        <span class="w20"> ( {{PersonalInformation.Age}}歳 ) </span>
       </div>
       <div class="caseitem-row">
-        <span class="w40 truncatable"> {{CaseDiagnosis}} </span>
-        <span class="w40 truncatable"> {{CaseProcedure}} </span>
-        <span class="w20" :class="CaseNotification?'caution-badge':''"> {{CaseNotification}} </span>
+        <span class="w40 truncatable"> {{Diagnosis}} </span>
+        <span class="w40 truncatable"> {{Procedure}} </span>
+        <span class="w20" :class="Notification?'caution-badge':''"> {{Notification}} </span>
       </div>
     </div>
     <div class="caseitem-controller">
@@ -21,7 +21,7 @@
 </template>
 
 <script>
-import CaseCategoryIdentifier from '@/components/Atoms/AtomCaseCategoryIdentifier'
+import CategoryIdentifier from '@/components/Atoms/AtomCaseCategoryIdentifier'
 import DbItems from '@/modules/DbItemHandler'
 
 export default {
@@ -36,30 +36,30 @@ export default {
     return {}
   },
   computed: {
-    $ItemDocument () {
+    ItemDocument () {
       return this.$store.getters.GetItemObject(this.uid)
     },
-    CaseCategory () {
-      return this.$ItemDocument.TypeOfProcedure
+    Category () {
+      return this.ItemDocument.TypeOfProcedure
     },
-    CaseDate () {
-      return this.$ItemDocument.DateOfProcedure
+    DateOfProcedure () {
+      return this.ItemDocument.DateOfProcedure
     },
-    CasePersonalInformation () {
+    PersonalInformation () {
       return {
-        Id: this.$ItemDocument.InstitutionalPatientId,
-        Name: this.$ItemDocument.Name,
-        Age: this.$ItemDocument.Age
+        Id: this.ItemDocument.InstitutionalPatientId,
+        Name: this.ItemDocument.Name,
+        Age: this.ItemDocument.Age
       }
     },
-    CaseDiagnosis () {
-      return DbItems.getItemValue(this.$ItemDocument.Diagnoses[0])
+    Diagnosis () {
+      return DbItems.getItemValue(this.ItemDocument.Diagnoses[0])
     },
-    CaseProcedure () {
-      return DbItems.getItemValue(this.$ItemDocument.Procedures[0])
+    Procedure () {
+      return DbItems.getItemValue(this.ItemDocument.Procedures[0])
     },
-    CaseNotification () {
-      return this.$ItemDocument.PresentAE ? '合併症あり' : ''
+    Notification () {
+      return this.ItemDocument.PresentAE ? '合併症あり' : ''
     }
   },
   methods: {
@@ -68,7 +68,7 @@ export default {
     }
   },
   components: {
-    CaseCategoryIdentifier
+    CategoryIdentifier
   }
 }
 </script>

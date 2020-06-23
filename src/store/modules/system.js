@@ -1,60 +1,75 @@
-/* global DatabaseInstance */
-
 // 保存先は最終的にはデータベースではなく electron.config に逃げる予定
 
 export default {
   namespaced: true,
   state: {
     InstitutionName: '',
-    InstitutionId: '',
+    InstitutionID: '',
+    JSOGoncologyboardID: '',
     EnabledJSOGId: true,
     EnabledNCDId: true
   },
   getters: {
-    GetInstitution (state) {
+    GetInstitutionInformation (state) {
       return {
         Name: state.InstitutionName,
-        Id: state.InstitutionId
+        InstitutionID: state.InstitutionID,
+        JSOGoncologyboardID: state.JSOGoncologyboardID
       }
+    },
+    EditJSOGId (state) {
+      return state.EnabledJSOGId
+    },
+    EditNCDId (state) {
+      return state.EnabledNCDId
     }
   },
   mutations: {
-    SetSystemSettings (state, payload) {
-      for (const prop in Object.keys(state)) {
-        if (payload[prop]) {
-          state[prop] = payload[prop]
+    SetPreferences (state, payloads) {
+      for (const key of Object.keys(payloads)) {
+        if (state[key] !== undefined) {
+          state[key] = payloads[key]
         }
       }
     }
   },
   actions: {
-    GetSettings (context) {
-      DatabaseInstance.findOne(
-        { Settings: { $exists: true } }
-      )
-        .exec(
-          (errstring, documents) => {
-            if (documents.length > 0) {
-              context.commit('SetSystemSettings', documents[0].Settings)
-            }
-          }
+    LoadPreferences (context) {
+      return new Promise((resolve, reject) => {
+        context.rootState.DatabaseInstance.findOne(
+          { Settings: { $exists: true } }
         )
+          .exec(
+            (errstring, document) => {
+              if (errstring) reject(errstring)
+
+              if (document !== null) {
+                context.commit('SetPreferences', document.Settings)
+              }
+              resolve()
+            }
+          )
+      })
     },
-    SetSettings (context, payload) {
-      if (Object.keys(payload).length > 0) {
-        DatabaseInstance.update(
-          { Settings: { $exist: true } },
-          { Settings: payload },
+    SavePreferences (context) {
+      const temporaryState = {}
+      for (const key of Object.keys(context.state)) {
+        temporaryState[key] = context.state[key]
+      }
+
+      return new Promise((resolve, reject) => {
+        context.rootState.DatabaseInstance.update(
+          { Settings: { $exists: true } },
+          { Settings: temporaryState },
           { upsert: true },
           (errorstring) => {
             if (errorstring) {
-              console.log('error on update setting', errorstring)
-            } else {
-              context.commit('ReloadSettings')
+              reject(errorstring)
             }
+            resolve()
           }
         )
-      }
+      })
     }
   }
 }

@@ -16,12 +16,11 @@ const store = new Vuex.Store({
     DatabaseInstance: undefined,
     // 表示されるデータ
     DataStore: [],
-    CurrentIndex: -1, // pageficationではないが表示されているデータのインデックス
-    Filters: {
+    Filter: {
       SequentialId: { $gt: 0 }
     }, // フィルターの設定
-    SortOrders: {
-      SequentialId: 1
+    SortOrder: {
+      SequentialId: -1
     } // ソートの設定
   },
   getters: {
@@ -34,6 +33,11 @@ const store = new Vuex.Store({
       return state.DataStore.map(
         item => item.SequentialId
       )
+    },
+    // 現在の DataStore の長さを配列で返す.
+    //
+    GetNumberOfCases (state) {
+      return state.DataStore.length
     },
     // 指定された SequentialId の {Array} [前の SequqntialId, 後の SequqntialId] を返す.
     // 存在しないものは 0.
@@ -67,7 +71,7 @@ const store = new Vuex.Store({
     // DatabaseInstanceを設定する.
     // App.vue の onCreated からのみ呼ばれる.
     //
-    onCreated (state, payload) {
+    initDatabase (state, payload) {
       // electronに実装する際にはユーザデータフォルダに置くようにする
       // 当面はブラウザのローカルストレージを使用する.
       const filename = 'joed.nedb'
@@ -87,44 +91,63 @@ const store = new Vuex.Store({
     // SortOrderの設定
     //
     // @param {Object} Field: order(-1 or 1)
-    SetSortOrders (state, payload) {
-      state.SortOrders = Object.assign({}, payload)
+    SetSortOrder (state, payload) {
+      state.SortOrder = Object.assign({}, payload)
     },
 
     // Filterの設定
     //
     // @param {Object} Field: value
-    SetFilters (state, payload) {
-      state.Filters = Object.assign({ SequentialId: { $gt: 0 } }, payload)
+    SetFilter (state, payload) {
+      state.Filter = Object.assign({ SequentialId: { $gt: 0 } }, payload)
     }
-
   },
 
   actions: {
     // DataStoreの更新. データベースの操作後は必ず実行する.
     //
-    ReloadDatastore (context) {
-      context.state.DatabaseInstance.find(
-        context.state.Filters // { SequentialId: { $gt: 0 } }
-      )
-        .sort(context.state.SortOrders)
-        .exec(
-          (error, documents) => {
-            if (!error) {
-              context.commit('SetDatastore', documents)
-            }
-          }
+    ReloadDatastore (context, payload = {}) {
+      return new Promise((resolve, reject) => {
+        const Filter = { SequentialId: { $gt: 0 } }
+        const SortOrder = {}
+        if (payload.Filter !== undefined && toString.caller(Filter) === '[object Object]') {
+          Object.assign(Filter, payload.Filter)
+        } else {
+          Object.assign(Filter, context.state.Filter)
+        }
+
+        if (payload.SortOrder !== undefined && toString.caller(SortOrder) === '[object Object]') {
+          Object.assign(Filter, payload.SortOrder)
+        } else {
+          Object.assign(Filter, context.state.SortOrder)
+        }
+
+        context.state.DatabaseInstance.find(
+          context.state.Filter
         )
+          .sort(context.state.SortOrder)
+          .exec(
+            (error, documents) => {
+              if (!error) {
+                context.commit('SetDatastore', documents)
+                resolve()
+              } else {
+                reject(error)
+              }
+            }
+          )
+      })
     },
 
     // 症例データの新規登録. 同一日時に同一IDの症例は登録出来ない.
     //
     // @param {Object} オブジェクトCase
     InsertItemIntoDatastore (context, payload) {
+      const DatabaseInstance = context.state.DatabaseInstance
       const ErrorAutonumberFailed = 'データベースエラー AUTO-NUMBERING FAILED'
 
       return new Promise((resolve, reject) => {
-        context.state.DatabaseInstance.count(
+        DatabaseInstance.count(
           {
             InstitutionalPatientId: payload.InstitutionalPatientId,
             DateOfProcedure: payload.DateOfProcedure
@@ -138,25 +161,25 @@ const store = new Vuex.Store({
       }).then(() => {
         return new Promise((resolve, reject) => {
           payload.SequentialId = '__autoid__'
-          context.state.DatabaseInstance.insert(
+          DatabaseInstance.insert(
             payload,
             (error) => {
               if (error) reject(error)
 
-              context.state.DatabaseInstance.findOne(
+              DatabaseInstance.findOne(
                 { sequence: 'maindb' },
                 (error, sequencerow) => {
                   if (error) reject(error)
 
                   const newid = (sequencerow ? sequencerow.number : 0) + 1
-                  context.state.DatabaseInstance.update(
+                  DatabaseInstance.update(
                     { sequence: 'maindb' },
                     { sequence: 'maindb', number: newid },
                     { upsert: true },
                     (error) => {
                       if (error) reject(new Error(ErrorAutonumberFailed))
 
-                      context.state.DatabaseInstance.update(
+                      DatabaseInstance.update(
                         { SequentialId: '__autoid__' },
                         { $set: { SequentialId: newid } },
                         {},
@@ -177,7 +200,7 @@ const store = new Vuex.Store({
       }).catch(error => {
         // 連番付与が失敗した場合は症例データ登録を rollback.
         if (error.message === ErrorAutonumberFailed) {
-          context.state.DatabaseInstance.remove(
+          DatabaseInstance.remove(
             { SequentialId: '__autoid__' },
             { multi: false }
           )
@@ -191,9 +214,10 @@ const store = new Vuex.Store({
     //
     // @param {Object} オブジェクトCase
     ReplaceItemInDatastore (context, payload) {
+      const DatabaseInstance = context.state.DatabaseInstance
       return new Promise((resolve, reject) => {
         if (payload.SequentialId <= 0) reject(new Error('内部IDの指定に問題があります.'))
-        context.state.DatabaseInstance.find(
+        DatabaseInstance.find(
           {
             InstitutionalPatientId: payload.InstitutionalPatientId,
             DateOfProcedure: payload.DateOfProcedure
@@ -204,7 +228,7 @@ const store = new Vuex.Store({
             for (const document of documents) {
               if (document.SequentialId !== payload.SequentialId) reject(new Error('同一日に同一IDの症例は登録できません.'))
             }
-            context.state.DatabaseInstance.update(
+            DatabaseInstance.update(
               { SequentialId: payload.SequentialId },
               payload,
               {},
@@ -250,7 +274,43 @@ const store = new Vuex.Store({
           reject(error)
         }
       })
+    },
+
+    // 症例データのもつ DateOfProcedure から年次と症例数を集計したobjectを返す(async-promise)
+    //
+    async GetYears (context) {
+      const DatabaseInstance = context.state.DatabaseInstance
+
+      return new Promise((resolve, reject) => {
+        DatabaseInstance.find(
+          {
+            SequentialId: { $gt: 0 }
+          },
+          {
+            DateOfProcedure: 1,
+            _id: 0
+          }).sort(
+          {
+            DateOfProcedure: -1
+          }).exec(
+          (error, documents) => {
+            if (error) {
+              reject(error)
+            } else {
+              const CountByYear = {}
+              for (const document of documents) {
+                const year = document.DateOfProcedure.substring(0, 4)
+
+                if (!CountByYear[year]) CountByYear[year] = 0
+                CountByYear[year]++
+              }
+              resolve(CountByYear)
+            }
+          }
+        )
+      })
     }
+
   }
 })
 

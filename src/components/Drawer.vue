@@ -49,13 +49,13 @@ div.menu-item-content
   display: flex
   flex-direction: column
   & > div
-    height: 2.6rem
+    min-height: 2.6rem
   select
-    width: 80%
+    width: 100%
     margin: 0.3rem 0
     height: 2rem
   input
-    width: 80%
+    width: 100%
     height: 2rem
 
 </style>

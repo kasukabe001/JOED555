@@ -1,5 +1,3 @@
-/* global DatabaseInstance */
-
 // 保存先は最終的にはデータベースではなく electron.config に逃げる予定
 
 const MD5salt = 0x76b3
@@ -21,6 +19,9 @@ export default {
   getters: {
     isAuthenticated (state) {
       return state.Authenticated
+    },
+    isPasswordRequired (state) {
+      return state.PasswordRequired
     }
   },
   actions: {
@@ -39,16 +40,22 @@ export default {
             if (error) reject(error)
             // パスワード設定無し
             if (document === null) {
-              context.commit('SetCurrentPasswordRequirement', false)
-              context.commit('SetStatus', true)
+              if (!payload.SuppressStateChange) {
+                context.commit('SetCurrentPasswordRequirement', false)
+                context.commit('SetStatus', true)
+              }
               resolve()
             }
 
-            if (document.Password === HHX.h64(payload, MD5salt).toString(16)) {
-              context.commit('SetStatus', true)
+            if (document !== null && document.Password === HHX.h64(payload.PasswordString, MD5salt).toString(16)) {
+              if (!payload.SuppressStateChange) {
+                context.commit('SetStatus', true)
+              }
               resolve()
             } else {
-              context.commit('SetStatus', false)
+              if (!payload.SuppressStateChange) {
+                context.commit('SetStatus', false)
+              }
               reject(new Error('Authentication failed'))
             }
           }
@@ -74,13 +81,12 @@ export default {
           )
         } else {
           const hashedPassword = HHX.h64(payload, MD5salt).toString(16)
-          DatabaseInstance.update(
+          context.rootState.DatabaseInstance.update(
             { Password: { $exists: true } },
             { Password: hashedPassword },
             { upsert: true },
-            (error, numRows) => {
+            (error) => {
               if (error) reject(error)
-              if (numRows > 0) console.log('Password updated.', payload, '->', hashedPassword)
             }
           )
         }

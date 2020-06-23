@@ -173,8 +173,12 @@ export default {
         }
       })
     },
-    GoBack () {
-      this.$router.push({ name: 'list' })
+    GoBackToList (hashuid) {
+      if (hashuid === 0) {
+        this.$router.push({ name: 'list' })
+      } else {
+        this.$router.push({ name: 'list', hash: ('#case-' + hashuid) })
+      }
     },
 
     setValidationStatus (target, value) {
@@ -231,7 +235,7 @@ export default {
 
       if (this.Edited === false || isEmpty || Popups.confirm('編集中の項目がありますがよろしいですか?')) {
         if (offset === 0) {
-          this.GoBack()
+          this.GoBackToList(this.uid)
         } else {
           if (offset < 0 && this.Nexts[0] !== 0) {
             this.$router.push({ name: 'edit', params: { uid: this.Nexts[0] } })
@@ -245,12 +249,12 @@ export default {
     RemoveItem () {
       if (this.uid > 0 && Popups.confirm('この症例を削除します.よろしいですか?')) {
         this.$store.dispatch('RemoveItemFromDatastore', { SequentialId: this.uid })
-        this.GoBack()
+        this.GoBackToList()
       }
     },
     CommitItem () {
       this.StoreItem()
-        .then(() => this.GoBack())
+        .then(() => this.GoBackToList(this.uid))
         .catch(e => Popups.alert(e.message))
     },
     CommitItemAndRenew () {

@@ -2,7 +2,7 @@
   <div class="menu-item">
     <div class="menu-item-content">
       <div>
-        <select v-model="ComponentSortItem">
+        <select v-model="SortItem">
           <option value="SequentialId">登録順</option>
           <option value="DateOfProcedure">手術日</option>
           <option value="ProcedureTime">手術時間</option>
@@ -13,7 +13,7 @@
       </div>
 
       <el-switch
-        v-model="ComponentSortOrder"
+        v-model="SortOrder"
         active-text="昇順"
         :active-value="1"
         active-color="#444444"
@@ -28,17 +28,24 @@
 export default {
   name: 'SortMenu',
   prop: {
-    SortItem: { required: true },
-    SortOrder: { required: true }
+    value: {
+      SortItem: { required: true },
+      SortOrder: { required: true }
+    }
   },
   computed: {
-    ComponentSortItem: {
-      get () { return this.SortItem },
-      set (newvalue) { this.$emit('update:SortItem', newvalue) }
+    SortItem: {
+      get () { return this.value.SortItem },
+      set (newvalue) {
+        this.value.SortItem = newvalue
+        this.$emit('update', this.value) }
     },
-    ComponentSortOrder: {
-      get () { return this.SortOrder },
-      set (newvalue) { this.$emit('update:SortOrder', newvalue) }
+    SortOrder: {
+      get () { return this.value.SortOrder },
+      set (newvalue) {
+        this.value.SortOrder = newvalue
+        this.$emit('update', this.value)
+      }
     }
   }
 }

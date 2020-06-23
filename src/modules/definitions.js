@@ -14,7 +14,6 @@ class Cases {
     _id // Applied by nedb
     SequentialId // Number
     UniqueId // String : created on export
-    ValidationReport // Array of String
     Name // String
     Age // Number
     InstitutionalPatientId // String
@@ -24,9 +23,11 @@ class Cases {
     ProcedureTime // String
     TypeOfProcedure // String
     PresentAE // Boolean
+    AEs // Array of object AE
     Diagnoses // Array of object Diagnosis
     Procedures // Array of object Procedure
-    AEs // Array of object AE
+    Imported // Boolean
+    ValidationReport // Array of String
 }
 
 class Diagnosis {

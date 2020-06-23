@@ -7,7 +7,9 @@
 <script>
 export default {
   created () {
-    this.$store.commit('onCreated')
+    this.$store.commit('initDatabase')
+    this.$store.dispatch('ReloadDatastore')
+
     // this.$router.push('/') // comment out in Electron environment
   },
   computed: {
@@ -18,8 +20,3 @@ export default {
   }
 }
 </script>
-
-<style lang="sass">
-@import 'cross-plathome-yu-gothic.css'
-@import 'app-global.sass'
-</style>

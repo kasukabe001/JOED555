@@ -84,34 +84,32 @@ export default class DbItems {
     return temporaryArray
   }
 
-  static exportCases (CaseArray = [], YearFilter = '', spliceDateOfProcedure = false) {
+  static exportCase (item = {}, InstituteId = '99999', params = { spliceDateOfProcedure: false, exportAllfields: false }) {
+    const temporaryItem = {}
     const propsToExport = [
-      'Age',
-      'JSOGId', 'NCDId',
-      'DateOfProcedure',
-      'TypeOfProcedure',
-      'ProcedureTime',
-      'PresentAE'
+      'Age', 'JSOGId', 'NCDId',
+      'DateOfProcedure', 'DateOfProcedure', 'ProcedureTime', 'PresentAE',
+      'Imported'
     ]
-    return CaseArray
-      .filter(item => item.DateOfProcedure.substr(0, 4) === YearFilter)
-      .map(item => {
-        const temporaryItem = {}
-        temporaryItem.UniqueID = ['99999', YearFilter, item.SequentialId].join('-')
+    if (params.exportAllfields) {
+      propsToExport.push('Name', 'InstitutionalPatientId')
+      params.spliceDateOfProcedure = false
+    }
 
-        for (const prop of propsToExport) {
-          if (item[prop] !== undefined) {
-            temporaryItem[prop] = item[prop]
-          }
-        }
-        if (spliceDateOfProcedure) delete temporaryItem.DateOfProcedure
+    for (const prop of propsToExport) {
+      if (item[prop] !== undefined) {
+        temporaryItem[prop] = item[prop]
+      }
+    }
+    if (params.spliceDateOfProcedure) delete temporaryItem.DateOfProcedure
 
-        temporaryItem.Diagnoses = this._flattenHashItem(item.Diagnoses)
-        temporaryItem.Procedures = this._flattenHashItem(item.Procedures)
-        if (item.AEs) {
-          temporaryItem.AEs = Object.assign([], item.AEs)
-        }
-        return temporaryItem
-      })
+    temporaryItem.UniqueID = [InstituteId, item.DateOfProcedure.substring(0, 4), item.SequentialId].join('-')
+
+    temporaryItem.Diagnoses = this._flattenHashItem(item.Diagnoses)
+    temporaryItem.Procedures = this._flattenHashItem(item.Procedures)
+    if (item.AEs) {
+      temporaryItem.AEs = Object.assign([], item.AEs)
+    }
+    return temporaryItem
   }
 }

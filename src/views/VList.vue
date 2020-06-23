@@ -11,7 +11,7 @@
     </el-drawer>
     <div class="list-new-entry new-entry-button" @click="CreateNewEntry()"></div>
 
-    <div class="itemlist">
+    <div class="itemlist" @keyup.ctrl.65="CreateNewEntry()">
       <Caseitem v-for="uid in Uids" :key="uid" :uid="uid" />
     </div>
 
@@ -29,7 +29,10 @@ export default {
     Caseitem, Drawer
   },
   mounted () {
-    this.$store.dispatch('ReloadDatastore')
+    // routerのモードにかかわらずhashが効果をもたらすようにscrollを代替する
+    if (this.$route.hash && document.querySelector(this.$route.hash)) {
+      document.querySelector(this.$route.hash).scrollIntoView({ block: 'center' })
+    }
   },
   data () {
     return ({

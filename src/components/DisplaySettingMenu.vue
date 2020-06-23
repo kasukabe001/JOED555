@@ -1,6 +1,7 @@
 <template>
   <div class="menu-item">
-        <div class="menu-item-content">
+    <div class="menu-item-content w80">
+      <div class="subtitle-section">表示の順番</div>
       <div>
         <select v-model="SortItem">
           <option value="SequentialId">登録順</option>
@@ -21,8 +22,10 @@
         :inactive-value="-1"
         inactive-color="#444444" />
     </div>
-    <div class="menu-item-content">
-      <el-select v-model="FilterItems" multiple placeholder="全て表示する">
+
+    <div>表示する内容</div>
+    <div class="menu-item-content w80">
+      <el-select v-model="FilterItems" multiple :clearable="true" placeholder="全て表示する">
         <el-option-group label="カテゴリ">
           <el-option :value="{ field: 'TypeOfProcedure', value: '腹腔鏡' }" label="腹腔鏡" />
           <el-option :value="{ field: 'TypeOfProcedure', value: '腹腔鏡悪性' }" label="腹腔鏡悪性" />
@@ -50,7 +53,7 @@ export default {
   data () {
     return ({
       SortItem: 'SequentialId',
-      SortOrder: 1,
+      SortOrder: -1,
       FilterItems: []
     })
   },
@@ -69,13 +72,19 @@ export default {
         }
       }
 
-      this.$store.commit('SetSortOrders', { [this.SortItem]: Number(this.SortOrder) })
-      this.$store.commit('SetFilters', filterObj)
-      this.$store.dispatch('ReloadDatastore')
+      this.$store.commit('SetSortOrder', { [this.SortItem]: Number(this.SortOrder) })
+      this.$store.commit('SetFilter', filterObj)
+      this.$store.dispatch('ReloadDatastore').then(_ => {
+        this.$notify({
+          title: '表示設定変更',
+          message: this.$store.getters.GetNumberOfCases + '件表示します.',
+          duration: 3800
+        })
+      })
     },
     Revert () {
       this.SortItem = 'SequentialId'
-      this.SortOrder = 1
+      this.SortOrder = -1
       this.FilterItems.splice(0)
       this.Apply()
     }

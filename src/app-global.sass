@@ -17,6 +17,17 @@ $--color-info: #22AAFF
 $--color-warning: #FF8F25
 $--color-text-placeholder: #C0C4CC
 
+// declare CSS vars
+:root
+  --color-primary: $--color-primary
+  --color-text-primary: $--color-text-primary
+  --color-text-regular: $--color-text-regular
+  --color-danger: $--color-danger
+  --border-color-base: $--border-color-base
+  --color-info: $--color-info
+  --color-warning: $--color-warning
+  --color-text-placeholder: $--color-text-placeholder
+
 html
   font-family: cross-platform-yu-gothic, sans-serif
   font-weight: 500
@@ -78,8 +89,7 @@ option:checked
   letter-spacing: 0.05rem
 
 .subtitle-section
-  font-size: 1.15rem
-  font-weight: bold
+  font-size: 1.2rem
   letter-spacing: 0.05rem
 
 // 省略可能span
@@ -288,3 +298,14 @@ div.content-bottom
     text-align: right
     margin: 2px 0
     height: 2.5em
+
+// elementをoverride
+
+.el-tooltip__popper
+  font-size: 1rem
+  line-height: 1.35rem
+
+div.AE-popper
+  div:nth-child(2),:nth-last-child(2)
+    margin-top: 0.5rem
+

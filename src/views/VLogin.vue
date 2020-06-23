@@ -33,13 +33,13 @@ export default {
     })
   },
   created () {
-    // 認証が設定されていない場合は無条件で認証済みとなる仕様を利用してパスワード認証が必要かを確認
-    this.$store.dispatch('password/Authenticate', '')
-      .then(() => { this.AuthenticationFree = true })
+    // 認証が設定の有無を確認
+    this.$store.dispatch('password/Authenticate', { PasswordString: '' })
+      .then(() => { this.AuthenticationFree = !this.$store.getters['password/isPasswordRequired'] })
   },
   methods: {
     PerformAuthentication () {
-      this.$store.dispatch('password/Authenticate', this.Password)
+      this.$store.dispatch('password/Authenticate', { PasswordString: this.Password })
         .then(() => this.$router.push({ name: 'list' }))
         .catch(() => { this.LoginFailed = true })
     }
