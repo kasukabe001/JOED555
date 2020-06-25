@@ -1,26 +1,27 @@
 // eslint-disable-next-line no-unused-vars
 export default class DbItems {
-  /*
-  データベースの項目
-  Diagnoses - Array - String
-  Procedures - Array - Hash
-  [
-    // 以下のhashがitem
-    {
-       Text: "登録される内容",
-       Chain: [ {{カテゴリ}}, {{対象}} ]
-       AdditionalProcedure: { Text: ..., Description: [] } => Chainを除くitem/出力データでは主アイテムの次に入る
-       Description: []
-    }
-  ]
-  */
-  static getItemValue (hashObject = {}, $propertyName = 'Text', $depthcount = 0) {
+  // データベースの項目
+  // Diagnoses - Array - String/Hash
+  // Procedures - Array - Hash
+  // [
+  //   // 以下のhashがitem
+  //  {
+  //     Text: "登録される内容",
+  //     Chain: [ {{カテゴリ}}, {{対象}}|undefined ]
+  //     AdditionalProcedure: { Text: ..., Description: [] } => Chainを除くitem/出力データでは主アイテムの次に入る
+  //     Description: []
+  //     UserTyped: boolean
+  //  }, ...
+  // ]
+
+  // 項目に登録された内容を取得する
+
+  static getItemValue (hashObject = {}, $propertyName = 'Text', $depthcount = 3) {
     if (hashObject[$propertyName]) {
       return hashObject[$propertyName]
     } else {
-      if (++$depthcount <= 3) {
-        // eslint-disable-next-line prefer-const
-        for (let key in hashObject) {
+      if (--$depthcount) {
+        for (const key in hashObject) {
           const value = this.getItemValue(hashObject[key], $propertyName, $depthcount)
           if (value) {
             return value
@@ -30,6 +31,8 @@ export default class DbItems {
       return undefined
     }
   }
+
+  // Chain[0], Chain[1], TEXT の配列を取得する
 
   static getItemChain (hashObject = {}, $propertyName = 'Text') {
     if (hashObject.Chain && hashObject[$propertyName]) {
@@ -84,6 +87,25 @@ export default class DbItems {
     return temporaryArray
   }
 
+  // 症例
+
+  static checkCaseConsistency (caseItem, exportOnly = false) {
+    const BasicInformations =
+      caseItem.Age > 0 &&
+      !!caseItem.InstitutionalPatientId &&
+      !!caseItem.DateOfProcedure &&
+      !!caseItem.ProcedureTime
+
+    return BasicInformations
+  }
+
+  // 症例データからエクスポート用のデータを成形する
+  //
+  // UniqueID を付与する
+  //
+  // @Param Object
+  // @Param String
+  // @Param Object
   static exportCase (item = {}, InstituteId = '99999', params = { spliceDateOfProcedure: false, exportAllfields: false }) {
     const temporaryItem = {}
     const propsToExport = [
@@ -96,14 +118,15 @@ export default class DbItems {
       params.spliceDateOfProcedure = false
     }
 
+    temporaryItem.UniqueID = [InstituteId, item.DateOfProcedure.substring(0, 4), item.SequentialId].join('-')
+
     for (const prop of propsToExport) {
       if (item[prop] !== undefined) {
         temporaryItem[prop] = item[prop]
       }
     }
-    if (params.spliceDateOfProcedure) delete temporaryItem.DateOfProcedure
 
-    temporaryItem.UniqueID = [InstituteId, item.DateOfProcedure.substring(0, 4), item.SequentialId].join('-')
+    if (params.spliceDateOfProcedure) delete temporaryItem.DateOfProcedure
 
     temporaryItem.Diagnoses = this._flattenHashItem(item.Diagnoses)
     temporaryItem.Procedures = this._flattenHashItem(item.Procedures)

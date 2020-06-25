@@ -16,7 +16,7 @@
       </div>
 
       <div>
-          <input type="button" style="float: right" value="ログイン" @click="PerformAuthentication" />
+          <el-button type="primary" style="float: right" @click="PerformAuthentication">ログイン</el-button>
       </div>
     </div>
   </div>
@@ -61,4 +61,10 @@ export default {
   flex-direction: column
   justify-content: space-around
   margin: 0 3rem
+  div
+    margin: 0.3rem 0
+  div:first-child
+    margin-top: 0
+  div:last-child
+    margin-bottom: 0
 </style>

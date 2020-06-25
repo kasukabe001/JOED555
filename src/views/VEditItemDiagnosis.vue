@@ -31,7 +31,6 @@
           <div class="subtitle-section">候補病名</div>
           <select v-model="SelectedItem"
             size="8"
-            @change="EditableItem = SelectedItem; ItemEdited = false"
             @dblclick="CommitChanges()">
             <option v-if="CandidateItems.length === 0" value=""/>
             <option v-for="(item,key,index) in CandidateItems"
@@ -96,6 +95,18 @@ export default {
       this.TargetOrgan = this.ItemValue.Chain[1] ? this.ItemValue.Chain[1] : ''
       this.EditableItem = this.ItemValue.Text
       this.$nextTick()
+    }
+  },
+  watch: {
+    SelectedItem: {
+      handler: function (newvalue) {
+        if (this.IsItemEdited) {
+          if (newvalue !== '') {
+            this.UserInputText = this.EditableItem
+          }
+        }
+        this.EditableItem = newvalue
+      }
     }
   },
   computed: {

@@ -12,7 +12,7 @@ export default {
   getters: {
     GetInstitutionInformation (state) {
       return {
-        Name: state.InstitutionName,
+        InstitutionName: state.InstitutionName,
         InstitutionID: state.InstitutionID,
         JSOGoncologyboardID: state.JSOGoncologyboardID
       }

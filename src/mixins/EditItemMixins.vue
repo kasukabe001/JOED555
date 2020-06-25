@@ -19,7 +19,7 @@ export default {
     }
   },
   mounted () {
-    this.ExpandEditsection = (this.IsUsertypedItem === true)
+    this.ExpandEditsection = (this.ItemValue.UserTyped === true)
   },
   computed: {
     TrimmedEditableItem () {
@@ -33,15 +33,11 @@ export default {
 
     IsItemEdited () {
       return this.SelectedItem !== this.EditableItem
-    },
-
-    IsUsertypedItem () {
-      return (this.ItemValue.UserTyped === true)
     }
   },
   methods: {
     ToggleEditsection () {
-      this.ExpandEditsection = !this.ExpandEditsection || this.IsUsertypedItem || this.IsItemEdited
+      this.ExpandEditsection = !this.ExpandEditsection || (this.ItemValue.UserTyped === true) || this.IsItemEdited
     },
     GoBack () {
       this.$router.go(-1)

@@ -30,6 +30,7 @@ https://p4testsuite.hostingerapp.com/JOEDv5/
 - 2020-06-16 SPA版のRCに向けて大幅にUI適応を拡大, コンポーネントのメインテナンス.ハードコードのモジュール化.診断・術式検索機能の強化と手入力抑制のための警告.
 - 2020-06-18 機能未実装部分も含めてフロントエンドのパーツを実装.AEのセクション表示の問題を修正(Titleがないケースに対応,重複チェックのやりかたを変更).
 - 2020-06-21 パスワードが機能するようになりました. 裏でいろいろ最終的な各種機能実装が進んでいます.
+- 2020-06-23 編集画面での前後が、登録と一緒にもできるようになりました. 施設名・ID入力(検索付き)が機能します. エクスポートが作りかけです（エラーチェックがまだ動作しません）.
 
 現時点で作成中のweb版ではデータはブラウザのストレージに保存されます.データベースの削除・修正などは https://p4testsuite.hostingerapp.com/JOEDv5/Database_Manager/ のユーティリティを使用してください.
 
@@ -78,8 +79,8 @@ Validationは診断・実施術式・合併症のマスタを参照するので�
 |Diagnoses                  |array  | |X|X|診断オブジェクト - Diagnosis|
 |Procedures                 |array  | |X|X|術式オブジェクト - Procedure|
 |AEs                        |array  | | |X|合併症オブジェクト - AE|
-|isError                    |string | | | |データチェックによるエラーの有無(インポートされたデータ用)|
-|Notification               |string | | | |データチェックによる確認内容（エラーを含む）の内容(インポートされたデータ用)|
+|Imported                   |boolean| | | |読み込まれたデータ
+|Notification               |string | | | |データチェックによる確認内容（エラーを含む）の内容(主にインポートされたデータ用)|
 
 ### オブジェクト:Diagnosis
 提出データでは、Textにflattenされる.
@@ -88,6 +89,8 @@ Validationは診断・実施術式・合併症のマスタを参照するので�
 |:--------------------------|:-----:|:--:|:--:|:--:|:--|
 |Text                       |string | |X|X|診断名マスタから引用|
 |Chain                      |array  | | | |選択ツリー[Category, Target]|
+|Description                |string | | |X|補足情報(将来の拡張用)|
+|UserTyped                  |boolean| | |X|手入力情報|
 
 ### オブジェクト:Procedure
 提出データでは、TextとDescriptionだけのhashにflattenされる.
@@ -97,8 +100,9 @@ Validationは診断・実施術式・合併症のマスタを参照するので�
 |Text                       |string | |X|X|術式名、術式マスタから引用
 |Chain                      |array  | | | |選択ツリー[Category, Target]
 |Description                |array  | | |x|付随情報
-|AdditionalProcedure        |object | | |x|併施術式 { Text: ..., Description: ...}
+|AdditionalProcedure        |string | | |x|併施術式名 これがあるときはDescription は併施術式のための情報となる
 |Ditto                      |array  | | | |重複確認の対象となる術式名
+|UserTyped                  |boolean| | |X|手入力情報|
 
 ### オブジェクト:AE
 |名称                        |タイプ  |フォーマット規則|必須項目|エクスポート対象|解説|
