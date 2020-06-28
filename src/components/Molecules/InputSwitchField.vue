@@ -10,6 +10,7 @@
         :active-text="texts[1]"
         :active-value="values[1]"
         active-color="$--color-primary"
+        :disabled="disabled"
       />
     </div>
 </div>
@@ -29,6 +30,10 @@ export default {
       type: [Array, Object]
     },
     required: {
+      default: false
+    },
+    disabled: {
+      type: Boolean,
       default: false
     }
   },

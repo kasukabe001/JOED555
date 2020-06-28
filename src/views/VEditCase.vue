@@ -21,21 +21,21 @@
         :container.sync="CaseData.Diagnoses"
         @addnewitem="OpenEditView('diagnosis')"
         @edititem="OpenEditView('diagnosis', $event)"
-        @removeCase="RemoveListItem('Diagnoses', $event)"
+        @removeitem="RemoveListItem('Diagnoses', $event)"
         @validate="setValidationStatus(0, $event)" />
 
       <SectionProcedures
         :container.sync="CaseData.Procedures"
         @addnewitem="OpenEditView('procedure')"
         @edititem="OpenEditView('procedure', $event)"
-        @removeCase="RemoveListItem('Procedures', $event)"
+        @removeitem="RemoveListItem('Procedures', $event)"
         @validate="setValidationStatus(1, $event)" />
 
       <SectionAEs
         :container.sync="CaseData.AEs"
         :optionValue.sync="isNoAEs"
         @addnewitem="OpenEditView('AE')"
-        @removeCase="RemoveListItem('AEs', $event)"
+        @removeitem="RemoveListItem('AEs', $event)"
         @validate="setValidationStatus(2, $event)" />
 
       <!-- Controles -->
@@ -44,7 +44,7 @@
 
       <div class="edit-controls">
         <div>
-          <el-button type="primary" icon="el-icon-arrow-left" @click="CancelEditing()">編集内容を破棄して戻る</el-button>
+          <el-button type="primary" icon="el-icon-arrow-left" @click="CancelEditing()">戻る</el-button>
         </div>
         <el-dropdown split-button type="primary" @click="CommitCase()" @command="CommitCaseAndGo">
           編集内容を保存

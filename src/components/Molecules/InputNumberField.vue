@@ -10,6 +10,7 @@
         :min="min"
         :max="max"
         @change="HandleRequired()"
+        :disabled="disabled"
         />
     </div>
 </div>
@@ -35,6 +36,10 @@ export default {
       type: Number
     },
     required: {
+      default: false
+    },
+    disabled: {
+      type: Boolean,
       default: false
     }
   },

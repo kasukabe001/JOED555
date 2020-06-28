@@ -7,4 +7,10 @@ export default class Popups {
   static confirm (message) {
     return window.confirm(message)
   }
+
+  static async timerwait (duration = 500) {
+    return new Promise((resolve) => {
+      setTimeout(resolve, duration)
+    })
+  }
 }

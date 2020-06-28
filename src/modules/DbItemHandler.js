@@ -87,15 +87,18 @@ export default class DbItems {
     return temporaryArray
   }
 
-  // 症例
+  // 症例データの検証
 
-  static checkCaseConsistency (caseItem, exportOnly = false) {
+  static checkConsistency (caseItem, exportOnly = false) {
+    // 必須入力項目
     const BasicInformations =
       caseItem.Age > 0 &&
       !!caseItem.InstitutionalPatientId &&
       !!caseItem.DateOfProcedure &&
       !!caseItem.ProcedureTime
 
+    const Year = caseItem.substr(0, 4)
+    console.log(Year)
     return BasicInformations
   }
 
@@ -110,12 +113,15 @@ export default class DbItems {
     const temporaryItem = {}
     const propsToExport = [
       'Age', 'JSOGId', 'NCDId',
-      'DateOfProcedure', 'DateOfProcedure', 'ProcedureTime', 'PresentAE',
+      'DateOfProcedure', 'DateOfProcedure', 'ProcedureTime', 'PresentAE', 'TypeOfProcedure',
       'Imported'
     ]
     if (params.exportAllfields) {
-      propsToExport.push('Name', 'InstitutionalPatientId')
+      propsToExport.splice(3, 0, 'InstitutionalPatientId', 'Name')
       params.spliceDateOfProcedure = false
+    }
+    if (!params.spliceDateOfProcedure) {
+      propsToExport.splice(3, 'DateOfProcedure')
     }
 
     temporaryItem.UniqueID = [InstituteId, item.DateOfProcedure.substring(0, 4), item.SequentialId].join('-')
@@ -125,8 +131,6 @@ export default class DbItems {
         temporaryItem[prop] = item[prop]
       }
     }
-
-    if (params.spliceDateOfProcedure) delete temporaryItem.DateOfProcedure
 
     temporaryItem.Diagnoses = this._flattenHashItem(item.Diagnoses)
     temporaryItem.Procedures = this._flattenHashItem(item.Procedures)

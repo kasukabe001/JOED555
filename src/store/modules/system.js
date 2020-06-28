@@ -17,6 +17,15 @@ export default {
         JSOGoncologyboardID: state.JSOGoncologyboardID
       }
     },
+    InstitutionName (state) {
+      return state.InstitutionName
+    },
+    InstitutionID (state) {
+      return state.InstitutionID
+    },
+    JSOGInstitutionID (state) {
+      return state.JSOGoncologyboardID
+    },
     EditJSOGId (state) {
       return state.EnabledJSOGId
     },

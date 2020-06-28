@@ -41,8 +41,8 @@ div.casecategory
   position: relative
   border: #444444 2px solid
   margin: auto
-  width: 31px
-  height: 31px
+  width: 1.7rem
+  height: 1.7rem
 
 div.badged::after
   position: absolute
@@ -52,8 +52,8 @@ div.badged::after
   bottom: 0
   width: 0
   height: 0
-  border-top: 0.5rem solid transparent
-  border-left: 0.5rem solid transparent
-  border-right: 0.5rem solid #FA00A4
-  border-bottom: 0.5rem solid #FA00A4
+  border-top: 0.45rem solid transparent
+  border-left: 0.45rem solid transparent
+  border-right: 0.45rem solid #FA00A4
+  border-bottom: 0.45rem solid #FA00A4
 </style>

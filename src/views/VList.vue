@@ -87,5 +87,5 @@ div.list-new-entry
   z-index: 10
   position: fixed
   top: 9px
-  left: 953px
+  left: 935px
 </style>

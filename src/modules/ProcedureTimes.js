@@ -1,24 +1,25 @@
-export default function ProcedureTimeSelections () {
-  return [
-    '30分まで',
-    '30分以上 － 60分まで',
-    '60分以上 － 90分まで',
-    '90分以上 － 120分まで',
-    '120分以上 － 150分まで',
-    '150分以上 － 180分まで',
-    '180分以上 － 210分まで',
-    '210分以上 － 240分まで',
-    '240分以上 － 270分まで',
-    '270分以上 － 300分まで',
-    '300分以上 － 330分まで',
-    '330分以上 － 360分まで',
-    '360分以上 － 420分まで',
-    '420分以上 － 480分まで',
-    '450分以上 － 480分まで',
-    '480分以上 － 540分まで',
-    '540分以上 － 600分まで',
-    '600分以上 － 660分まで',
-    '660分以上 － 720分まで',
-    '720分以上'
+export default function ProcedureTimeSelections (value = undefined) {
+  const breaks = [
+    30, 60, 90, 120, 150, 180, 210,
+    240, 270, 300, 330, 360, 420,
+    450, 480, 540, 600, 660, 720
   ]
+
+  if (value) {
+    if (value < breaks[0]) return breaks[0] + '分まで'
+    for (let i = 0; i < breaks.length - 1; i++) {
+      if (value >= breaks[i] && value < breaks[i + 1]) return breaks[i] + '分以上 － ' + breaks[i + 1] + '分まで'
+    }
+
+    return breaks[breaks.length - 1] + '分以上'
+  } else {
+    const temporaryArray = []
+    temporaryArray.push(breaks[0] + '分まで')
+    for (let i = 0; i < breaks.length - 1; i++) {
+      temporaryArray.push(breaks[i] + '分以上 － ' + breaks[i + 1] + '分まで')
+    }
+    temporaryArray.push(breaks[breaks.length - 1] + '分以上')
+
+    return temporaryArray
+  }
 }

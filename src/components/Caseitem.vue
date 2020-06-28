@@ -1,12 +1,15 @@
 <template>
   <div class="caseitem" :id="'case-'+uid" tabindex="0" @dblclick="MoveToEditView()">
-    <CategoryIdentifier :category="Category"></CategoryIdentifier>
+    <div class="caseitem-icon">
+      <CategoryIdentifier :category="Category"></CategoryIdentifier>
+    </div>
     <div class="caseitem-description">
       <div class="caseitem-row">
         <span class="w20"> {{DateOfProcedure}} </span>
         <span class="w20"> {{PersonalInformation.Id}} </span>
-        <span class="w40 truncatable"> {{PersonalInformation.Name}} </span>
-        <span class="w20"> ( {{PersonalInformation.Age}}歳 ) </span>
+        <span class="w30 truncatable"> {{PersonalInformation.Name}} </span>
+        <span class="w10"> ( {{PersonalInformation.Age}}歳 ) </span>
+        <span class="w20"></span>
       </div>
       <div class="caseitem-row">
         <span class="w40 truncatable"> {{Diagnosis}} </span>
@@ -76,37 +79,39 @@ export default {
 <style lang="sass">
 div.caseitem
   position: relative
-  width: 900px
+  width: 800px
   height: 60px
   border: black 1px solid
   background-color: white
-  margin-left: 39px
+  margin-left: 79px
   margin-top: 9px
   display: flex
-  justify-content: space-between
-  div.caseitem-description
-    width: 700px
+  flex-direction: row
+div.caseitem-icon
+  width: 60px
+  display: flex
+  flex-direction: row
+div.caseitem-description
+  width: 680px
+  display: flex
+  flex-direction: column
+  justify-content: space-around
+  div.caseitem-row
     display: flex
-    flex-direction: column
-    justify-content: space-around
-    div.caseitem-row
-      display: flex
-      flex-direction: row
-      justify-content: space-between
-  div.caseitem-controller
-    width: 80px
-    padding-left: 16px
-    padding-right: 16px
-    display: flex
-    flex-direction: column
-    justify-content: space-around
-    text-align: center
-  .caution-badge
-    border-radius: 10px
-    background-color: red
-    color: white
-    text-align: center
-    font-size: 0.9rem
-  .button-font
-    font-size: 1.4rem
+    flex-direction: row
+    // justify-content: space-between
+div.caseitem-controller
+  width: 60px
+  display: flex
+  flex-direction: column
+  justify-content: space-around
+  text-align: center
+.caution-badge
+  border-radius: 10px
+  background-color: red
+  color: white
+  text-align: center
+  font-size: 0.9rem
+.button-font
+  font-size: 1.4rem
 </style>

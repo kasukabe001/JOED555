@@ -10,10 +10,6 @@
       v-model="ExportDateOfProcedure"
       title="手術実施日の出力"
       :options="{しない: false, する: true}" />
-    <InputSwitchField
-      v-model="ExportDataForQuery"
-      title="学会提出用データを作成する"
-      :options="{しない: false, する: true}" />
     <div>
       <el-button type="primary" @click="StartProcessing()">出力データの作成</el-button>
     </div>
@@ -24,7 +20,11 @@
           <el-step title="システム設定" />
           <el-step title="要修正データ" />
           <el-step title="妥当性の検証" />
-          <el-step title="提出用データとして整形" />
+          <el-step title="提出用データとして整形">
+            <template #description>
+              <el-progress :percentage="ProcessingProgress"></el-progress>
+            </template>
+          </el-step>
           <el-step title="チェックサムの計算" />
           <el-step title="最終処理" />
         </el-steps>
@@ -32,10 +32,11 @@
     </el-collapse-transition>
 
     <div>
-      <textarea :value="tempout" v-show="tempout != ''" cols="80" rows="10"></textarea>
+      <textarea :value="OutputString" v-show="ShowPreview" cols="80" rows="10" disabled></textarea>
     </div>
     <div>
-      <el-button type="primary" :disabled="!ReadyForExport">出力先を指定してファイルの出力</el-button>
+      <el-button type="primary" :disabled="!ReadyForExport" @click="ShowPreview = true">出力先結果の確認</el-button>
+      <el-button type="primary" :disabled="!ReadyForExport" @click="Download()">出力先を指定してファイルの出力</el-button>
     </div>
   </div>
 </template>
@@ -55,7 +56,6 @@ export default {
     return ({
       ExportYear: '',
       ExportDateOfProcedure: true,
-      ExportDataForQuery: true,
       Selector: {},
 
       ProcessingStep: undefined,
@@ -63,7 +63,8 @@ export default {
       ProcessingAbort: false,
       ReadyForExport: false,
 
-      tempout: ''
+      ShowPreview: false,
+      OutputString: ''
     })
   },
   methods: {
@@ -71,28 +72,53 @@ export default {
       this.ProcessingPreparation = true
       this.ProcessingProgress = 0
       this.ProcessingAbort = false
-
-      const InstitutionSetting = {}
+      this.ReadyForExport = false
+      this.ShowPreview = false
 
       this.ProcessingStep = 0
-      this.CheckSystem()
-        .then((loadedSetting) => {
-          Object.assign(InstitutionSetting, loadedSetting)
 
+      // transitionの時間だけちょっと待つ（正直無駄）
+      new Promise((resolve) => setTimeout(resolve, 500))
+        .then(_ => {
+          this.CheckSystem()
+        })
+        .then(_ => {
           this.ProcessingStep++
           return this.CheckImported()
         })
         .then(_ => {
-          this.ProcessingStep = 3 // ++
-          return this.CreateExportData(InstitutionSetting.InstitutionID, !this.ExportDateOfProcedure)
+          this.ProcessingStep++
+          return new Promise((resolve) => { resolve() }) // this.CheckConsistency()
         })
         .then(_ => {
+          this.ProcessingStep++
+          return this.CreateExportData()
+        })
+        .then(exportItems => {
+          this.ProcessingStep++
+          return this.CreateHeader(exportItems)
+        })
+        .then(count => {
           this.ProcessingStep = 6
+          if (count > 0) {
+            this.ReadyForExport = true
+          }
         })
         .catch((error) => {
           Popups.alert(error)
           console.log(error)
         })
+    },
+
+    Download () {
+      // ブラウザでの動作にあわせて実装 electron では !要rewrite!
+      const temporaryElementA = document.createElement('A')
+      temporaryElementA.href = URL.createObjectURL(new Blob([this.OutputString]), { type: 'application/json' })
+      temporaryElementA.download = 'joed-data.json'
+      temporaryElementA.style.display = 'none'
+      document.body.appendChild(temporaryElementA)
+      temporaryElementA.click()
+      document.body.removeChild(temporaryElementA)
     },
 
     // 施設名とIDが設定されているかを確認
@@ -101,14 +127,14 @@ export default {
       return new Promise((resolve) => { resolve() })
         .then(_ => {
           return new Promise((resolve, reject) => {
-            const InstitutionSetting = this.$store.getters['system/GetInstitutionInformation']
-            resolve(InstitutionSetting)
+            const InstitutionID = this.$store.getters['system/InstitutionID']
+            resolve(InstitutionID)
           })
         })
-        .then((InstitutionSetting) => {
+        .then((InstitutionID) => {
           return new Promise((resolve, reject) => {
-            if (InstitutionSetting.InstitutionID === '') { reject(new Error('施設情報が未設定です.')) }
-            resolve(InstitutionSetting)
+            if (InstitutionID === '') { reject(new Error('施設情報が未設定です.')) }
+            resolve(InstitutionID)
           })
         })
     },
@@ -145,7 +171,7 @@ export default {
     // 基本的に入力時に検証されているので大丈夫だと思うが：
     //  必須項目の有無
     //  項目の重複(ditto含む)
-    /* CheckConsistency () {
+    CheckConsistency () {
       const DatabaseInstance = this.$store.state.DatabaseInstance
       this.ProcessingProgress = 0
 
@@ -193,9 +219,10 @@ export default {
             }
           })
         })
-    }, */
-    CreateExportData (InstituteId = '99999', spliceDateOfProcedure = false) {
+    },
+    CreateExportData () {
       const DatabaseInstance = this.$store.state.DatabaseInstance
+
       this.ProcessingProgress = 0
 
       return new Promise((resolve) => { resolve() })
@@ -206,7 +233,6 @@ export default {
             }
             if (this.ExportYear !== '') {
               const reg = new RegExp('^' + this.ExportYear + '-')
-              console.log(reg)
               selector.DateOfProcedure = { $regex: reg }
             }
 
@@ -219,23 +245,51 @@ export default {
           })
         })
         .then(documents => {
-          const length = documents.length
           const temporaryExportItems = []
+          const InstituteId = this.$store.getters['system/InstitutionID']
 
           return new Promise((resolve, reject) => {
             for (const index in documents) {
               const item = documents[index]
-              this.ProcessingProgress = parseInt(index * 100.0 / length)
+              this.ProcessingProgress = parseInt(index * 100.0 / documents.length)
 
               temporaryExportItems.push(
-                DbItems.exportCase(item, InstituteId, { spliceDateOfProcedure: spliceDateOfProcedure })
+                DbItems.exportCase(item, InstituteId,
+                  {
+                    spliceDateOfProcedure: !this.ExportDateOfProcedure
+                  }
+                )
               )
             }
-
-            this.tempout = JSON.stringify(temporaryExportItems, ' ', 2)
-            resolve(length)
+            this.ProcessingProgress = 100
+            resolve(temporaryExportItems)
           })
         })
+    },
+    CreateHeader (exportItem) {
+      return new Promise((resolve) => {
+        const length = exportItem.length
+
+        if (length > 0) {
+          const HHX = require('xxhashjs')
+          const TimeStamp = Date.now()
+
+          const OutputString = JSON.stringify(exportItem, ' ', 2)
+          const Checksum = HHX.h64(OutputString, TimeStamp).toString(16)
+
+          exportItem.splice(0, 0, {
+            InstitutionName: this.$store.getters['system/InstitutionName'],
+            InstitutionID: this.$store.getters['system/InstitutionID'],
+            JSOGoncologyboardID: this.$store.getters['system/JSOGInstitutionID'],
+            TimeStamp: TimeStamp,
+            Year: this.ExportYear || 'ALL',
+            NumberOfCases: exportItem.length,
+            MD5: Checksum
+          })
+        }
+        this.OutputString = JSON.stringify(exportItem, ' ', 2)
+        resolve(length)
+      })
     }
   }
 }

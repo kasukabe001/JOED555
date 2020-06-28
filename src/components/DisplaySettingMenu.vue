@@ -3,7 +3,7 @@
     <div class="menu-item-content w80">
       <div class="subtitle-section">表示の順番</div>
       <div>
-        <select v-model="SortItem">
+        <select v-model="Sort.Item">
           <option value="SequentialId">登録順</option>
           <option value="DateOfProcedure">手術日</option>
           <option value="ProcedureTime">手術時間</option>
@@ -14,7 +14,7 @@
       </div>
 
       <el-switch
-        v-model="SortOrder"
+        v-model="Sort.Order"
         active-text="昇順"
         :active-value="1"
         active-color="#444444"
@@ -34,6 +34,9 @@
           <el-option :value="{ field: 'TypeOfProcedure', value: '子宮鏡' }" label="子宮鏡" />
           <el-option :value="{ field: 'TypeOfProcedure', value: '卵管鏡' }" label="卵管鏡" />
         </el-option-group>
+        <el-option-group label="年次">
+          <el-option v-for="item in FilterYears" :key="item" :value="{ field: 'DateOfProcedure', value: item }" :label="item + '年'" />
+        </el-option-group>
         <el-option-group label="情報">
           <el-option :value="{ field: 'PresentAE', value: true }" label="合併症あり" />
           <el-option :value="{ field: 'Notification', value: true }" label="警告あり" />
@@ -52,40 +55,75 @@ export default {
   name: 'DisplaySettingMenu',
   data () {
     return ({
-      SortItem: 'SequentialId',
-      SortOrder: -1,
-      FilterItems: []
+      Sort: {
+        Item: 'SequentialId',
+        Order: -1
+      },
+      FilterItems: [],
+      // 年次: created()で非同期にロードされる
+      FilterYears: []
     })
+  },
+  created () {
+    this.$store.dispatch('GetYears').then((CountByYear) => {
+      this.FilterYears.splice(0, 0, ...Object.keys(CountByYear))
+    })
+
+    const preserved = this.$store.getters.GetViewSettings
+    if (preserved.Sort) {
+      Object.assign(this.Sort, preserved.Sort)
+    }
+    if (preserved.FilterItems) {
+      this.FilterItems.splice(0)
+      this.FilterItems.splice(0, 0, ...preserved.FilterItems)
+    }
   },
   methods: {
     Apply () {
-      const filterObj = {}
+      const SortOrder = { [this.Sort.Item]: Number(this.Sort.Order) }
+
+      const Filter = { SequentialId: { $gt: 0 } }
       for (const item of this.FilterItems) {
-        if (filterObj[item.field] === undefined) {
-          filterObj[item.field] = item.value
+        if (Filter[item.field] === undefined) {
+          Filter[item.field] = item.value
         } else {
-          if (filterObj[item.field].$in) {
-            filterObj[item.field].$in.push(item.value)
+          if (Filter[item.field].$in) {
+            Filter[item.field].$in.push(item.value)
           } else {
-            filterObj[item.field] = { $in: [filterObj[item.field], item.value] }
+            Filter[item.field] = { $in: [Filter[item.field], item.value] }
           }
         }
       }
 
-      this.$store.commit('SetSortOrder', { [this.SortItem]: Number(this.SortOrder) })
-      this.$store.commit('SetFilter', filterObj)
+      if (Filter.DateOfProcedure) {
+        let regexStr = ''
+        if (Filter.DateOfProcedure.$in) {
+          regexStr = Filter.DateOfProcedure.$in.join('|')
+        } else {
+          regexStr = Filter.DateOfProcedure
+        }
+        regexStr = '^(' + regexStr + ')-'
+        Filter.DateOfProcedure = { $regex: new RegExp(regexStr) }
+      }
+
+      this.$store.commit('SetSortOrder', SortOrder)
+      this.$store.commit('SetFilter', Filter)
+
+      this.$store.commit('SetViewSettings', { Sort: this.Sort, FilterItems: this.FilterItems })
+
       this.$store.dispatch('ReloadDatastore').then(_ => {
         this.$notify({
-          title: '表示設定変更',
+          title: '表示設定が変更されました',
           message: this.$store.getters.GetNumberOfCases + '件表示します.',
-          duration: 3800
+          duration: 3000
         })
       })
     },
     Revert () {
-      this.SortItem = 'SequentialId'
-      this.SortOrder = -1
+      this.Sort.Item = 'SequentialId'
+      this.Sort.Order = -1
       this.FilterItems.splice(0)
+      this.$nextTick()
       this.Apply()
     }
   }

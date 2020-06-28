@@ -5,7 +5,8 @@
       <input type="password"
         v-model="InputText"
         :placeholder="placeholder"
-        :class="RequiredClass"/>
+        :class="RequiredClass"
+        :disabled="disabled"/>
     </div>
 </div>
 </template>
@@ -24,6 +25,10 @@ export default {
       default: ''
     },
     required: {
+      default: false
+    },
+    disabled: {
+      type: Boolean,
       default: false
     }
   },

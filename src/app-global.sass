@@ -43,6 +43,7 @@ button
   font-size: 1rem
   height: 2.8rem
 
+
 input[type="text"],[type="number"],[type="password"]
   font-family: inherit
   font-size: 1rem
@@ -52,6 +53,8 @@ input[type="text"],[type="number"],[type="password"]
   height: 2rem
   border: 1px solid $--border-color-base
   border-radius: 2px
+  &:focus
+    outline: none
 
 select
   font-family: inherit
@@ -62,6 +65,8 @@ select
   border: 1px solid $--border-color-base
   border-radius: 2px
   padding: 2px
+  &:focus
+    outline: none
 
 option
   font-family: inherit
@@ -74,8 +79,8 @@ option:hover
   background-color: $--background-color-hover
 option:checked
   font-weight: 600
-  color: red
-  background-color: $--color-primary
+  // color: red
+  // background-color: $--color-primary
 
 // input, selectで使用される強調クラス
 .vacant

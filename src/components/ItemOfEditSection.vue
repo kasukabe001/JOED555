@@ -7,8 +7,8 @@
         ( {{Description}} )
       </span>
     </slot>
-    <i class="edit-button el-icon-edit" @click="EnterEditItem()" v-if="RequireEditing" />
-    <i class="remove-button el-icon-delete" @click="onClick()" />
+    <i class="edit-button el-icon-edit" @click="EditThisItem" v-if="RequireEditing" />
+    <i class="remove-button el-icon-delete" @click="RemoveThisItem" />
   </div>
 </template>
 
@@ -44,10 +44,10 @@ export default {
     }
   },
   methods: {
-    onClick () {
+    RemoveThisItem () {
       this.$emit('remove')
     },
-    EnterEditItem () {
+    EditThisItem () {
       this.$emit('edit')
     }
   }
