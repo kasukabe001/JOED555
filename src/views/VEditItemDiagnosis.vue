@@ -6,7 +6,7 @@
           <div class="subtitle-section">カテゴリ</div>
           <select v-model="Category"
             size="8"
-            @change="TargetOrgan = '', SelectedItem = ''">
+            @change="CategoryIsChanged()">
             <option v-for="(item,key,index) in Categories"
               :key="index"
               :value="item">
@@ -121,14 +121,32 @@ export default {
     }
   },
   methods: {
+    CategoryIsChanged () {
+      this.TargetOrgan = ''
+      if (this.SelectedItem !== '') {
+        this.EditableItem = ''
+      }
+
+      this.SelectedItem = ''
+      this.CandidateItems.splice(0)
+
+      this.$nextTick().then(_ => {
+        if (this.TargetOrgans.length === 1) {
+          this.TargetOrgan = this.TargetOrgans[0]
+          this.SetCandidateItemsBySelection()
+        }
+        this.$nextTick()
+      })
+    },
+
     SetCandidateItemsBySelection () {
-      this.CandidateItems = DiagnosesTree.Candidates(this.Category, this.TargetOrgan)
+      this.CandidateItems = DiagnosesTree.Candidates(this.Category, this.TargetOrgan, this.year)
       this.SelectedItem = ''
       this.$nextTick()
     },
     SetCandidateItemsByFreeword () {
       if (this.EditableItem && this.UserEditingAllowed) {
-        const flatten = DiagnosesTree.flatten(this.Category)
+        const flatten = DiagnosesTree.flatten(this.Category, this.year)
         const arr = getMatchesInDiagnoses(this.EditableItem, flatten)
         this.CandidateItems.splice(0, this.CandidateItems.length, ...arr)
         this.$nextTick()

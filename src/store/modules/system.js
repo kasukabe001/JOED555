@@ -6,6 +6,7 @@ export default {
     InstitutionName: '',
     InstitutionID: '',
     JSOGoncologyboardID: '',
+    ShowWelcomeMessage: true,
     EnabledJSOGId: true,
     EnabledNCDId: true
   },
@@ -31,6 +32,9 @@ export default {
     },
     EditNCDId (state) {
       return state.EnabledNCDId
+    },
+    ShowWelcomeMessage (state) {
+      return state.ShowWelcomeMessage
     }
   },
   mutations: {
@@ -79,6 +83,9 @@ export default {
           }
         )
       })
+    },
+    SetShowWelcomeMessage (context, value) {
+      context.commit('SetPreferences', { ShowWelcomeMessage: value })
     }
   }
 }

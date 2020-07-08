@@ -6,7 +6,7 @@
           <div class="subtitle-section">カテゴリ</div>
           <select v-model="Category"
             size="8"
-            @change="TargetOrgan = '', SelectedItem = ''">
+            @change="CategoryIsChanged()">
             <option v-for="(item,key,index) in Categories"
               :key="index"
               :value="item">
@@ -31,8 +31,8 @@
           <div class="subtitle-section">候補術式</div>
           <select
             size="8"
-            :value="SelectedItem"
-            @change="OnSelected"
+            v-model="SelectedItem"
+            @change="OnCandidateSelected()"
             @dblclick="CommitChanges()">
             <option v-if="CandidateItems.length===0" value=""/>
             <option v-for="(item,key,index) in CandidateItems"
@@ -145,7 +145,7 @@ export default {
     })
   },
   created () {
-    if (this.ItemValue.UserTyped && this.ItemValue.UserTyped === true) {
+    if (this.ItemValue && this.ItemValue.UserTyped === true) {
       this.Category = this.ItemValue.Chain[0]
       this.TargetOrgan = this.ItemValue.Chain[1] ? this.ItemValue.Chain[1] : ''
       this.EditableItem = this.ItemValue.Text
@@ -181,8 +181,26 @@ export default {
     }
   },
   methods: {
+    CategoryIsChanged () {
+      this.TargetOrgan = ''
+      if (this.SelectedItem !== '') {
+        this.EditableItem = ''
+      }
+
+      this.SelectedItem = ''
+      this.CandidateItems.splice(0)
+
+      this.$nextTick().then(_ => {
+        if (this.TargetOrgans.length === 1) {
+          this.TargetOrgan = this.TargetOrgans[0]
+          this.SetCandidateItemsBySelection()
+        }
+        this.$nextTick()
+      })
+    },
+
     SetCandidateItemsBySelection () {
-      this.CandidateItems = ProceduresTree.Candidates(this.Category, this.TargetOrgan)
+      this.CandidateItems = ProceduresTree.Candidates(this.Category, this.TargetOrgan, this.year)
       this.SelectedItem = ''
       this.Description.AdditionalProcedureTitle = ''
       this.Description.Title = ''
@@ -190,7 +208,7 @@ export default {
     },
     SetCandidateItemsByFreeword () {
       if (this.EditableItem && this.UserEditingAllowed) {
-        const flatten = ProceduresTree.flatten(this.Category)
+        const flatten = ProceduresTree.flatten(this.Category, this.year)
         const arr = getMatchesInProcedures(this.EditableItem, flatten)
 
         this.CandidateItems.splice(0, this.CandidateItems.length, ...arr)
@@ -205,16 +223,15 @@ export default {
       return str[str.length - 1] !== '$' ? str : str.substr(0, str.length - 1)
     },
 
-    OnSelected (event) {
-      const newValue = event.target.value
-      this.SelectedItem = newValue
+    OnCandidateSelected () {
+      const newValue = this.SelectedItem
       this.EditableItem = newValue
 
       if (!this.TargetOrgan) {
-        const searchByName = ProceduresTree.findItemByName(newValue)
+        const searchByName = ProceduresTree.findItemByName(newValue, this.year)
         this.TargetOrgan = searchByName.Chain[1]
       }
-      const selectedItemObject = ProceduresTree.getItemByName(this.Category, this.TargetOrgan, newValue)
+      const selectedItemObject = ProceduresTree.getItemByName(this.Category, this.TargetOrgan, newValue, this.year)
 
       this.setDataAdditionalProcedure(selectedItemObject)
     },
@@ -224,7 +241,7 @@ export default {
       if (additionalProcedure) {
         this.Description.AdditionalProcedureTitle = additionalProcedure
 
-        const additionalItem = ProceduresTree.getItemByName(this.Category, this.TargetOrgan, additionalProcedure)
+        const additionalItem = ProceduresTree.getItemByName(this.Category, this.TargetOrgan, additionalProcedure, this.year)
         this.setDataDescription(additionalItem)
       } else {
         this.Description.AdditionalProcedureTitle = ''
@@ -287,7 +304,7 @@ export default {
           // 選択されたものには適切な付随情報を収納
           temporaryItem.Chain = [this.Category, this.TargetOrgan]
 
-          const dittos = ProcedureTree.getDittos(ProceduresTree.getItemByName(...temporaryItem.Chain, temporaryItem.Text))
+          const dittos = ProcedureTree.getDittos(ProceduresTree.getItemByName(...temporaryItem.Chain, temporaryItem.Text, this.year))
           if (dittos) {
             temporaryItem.Ditto = Object.assign([], dittos)
           }

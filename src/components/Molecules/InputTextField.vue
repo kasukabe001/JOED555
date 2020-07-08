@@ -2,7 +2,7 @@
   <div>
     <div class="label"><span>{{title}}</span></div>
     <div class="field">
-      <input type="password"
+      <input type="text"
         v-model="InputText"
         :placeholder="placeholder"
         :class="RequiredClass"

@@ -4,7 +4,7 @@
       <el-tab-pane label="施設情報の設定">
         <SettingOfInstutute></SettingOfInstutute>
       </el-tab-pane>
-      <el-tab-pane label="アプリケーションの設定">
+      <el-tab-pane label="パスワード認証の設定">
         <SettingOfApplication></SettingOfApplication>
       </el-tab-pane>
     </el-tabs>

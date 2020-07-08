@@ -32,6 +32,7 @@ https://p4testsuite.hostingerapp.com/JOEDv5/
 - 2020-06-21 パスワードが機能するようになりました. 裏でいろいろ最終的な各種機能実装が進んでいます.
 - 2020-06-23 編集画面での前後が、登録と一緒にもできるようになりました. 施設名・ID入力(検索付き)が機能します. エクスポートが作りかけです（エラーチェックがまだ動作しません）.
 - 2020-06-26 エクスポートがまだエラーチェックが不完全ですができるようになりました.
+- 2020-07-05 暫定的ですが、2020年版マスタを実装.それに伴い後方互換である2019年版マスタとのフィルタリング切り替えを実装.(手術実施日を2019年にすると選択の内容が変わります.)
 
 現時点で作成中のweb版ではデータはブラウザのストレージに保存されます.データベースの削除・修正などは https://p4testsuite.hostingerapp.com/JOEDv5/Database_Manager/ のユーティリティを使用してください.
 
@@ -56,7 +57,7 @@ Validationは診断・実施術式・合併症のマスタを参照するので�
 |名称                        |タイプ  |フォーマット規則|必須項目|エクスポート対象|解説|
 |:--------------------------|:-----:|:------------:|:----:|:------------:|:--|
 |InstitutionName            |string | |X|X|施設名テーブルから引用される|
-|InstitutionID              |string | [0-9]{5} |X|X|施設名テーブルから引用される、未登録施設は学会に申請して番号交付を受ける|
+|InstitutionID              |string |\d{5}|X|X|施設名テーブルから引用される、未登録施設は学会に申請して番号交付を受ける|
 |JSOGoncologyboardID        |string | | |X|日産婦の腫瘍登録施設番号
 |ApplicationVersion         |string | |X|X|提出データ作成時のソフトウエアのバージョン|
 |Timestump                  |integer | |X|X|提出データ作成日時のUNIX timestump|
@@ -74,7 +75,7 @@ Validationは診断・実施術式・合併症のマスタを参照するので�
 |Age                        |integer| |X|X|年齢|
 |InstitutionalPatientId     |string | |X| |施設での患者ID|
 |JSOGId                     |string | | |X|日産婦腫瘍登録番号|
-|NCDId                      |string | | |X|NCDのロボット登録患者番号（将来的にこちらからのデータ流し込みにNCDが対応したときに備える）|
+|NCDId                      |string |\d{18}-\d{2}-\d{2}-\d{2}| |X|NCD症例識別コード～ロボット登録にけるNCD側の患者番号（将来的にこちらからのデータ流し込みにNCDが対応したときに備える）|
 |DateOfProcedure            |string |20(19\|[23][0-9])-(0[1-9]\|1[012])-([0-2][0-9]\|3[01])|X|x|手術日<br/>InstitutionalPatientIDとDateOfProcedureでユニークが望ましいが確認のみとする|
 |ProcedureTime              |string | |X|X|手術時間表記テーブルから引用される|
 |TypeOfProcedure            |string |(腹腔鏡\|腹腔鏡悪性\|ロボット支援下\|ロボット支援下悪性\|子宮鏡\|卵管鏡)|X|X|主たる術式の種別、Procedures配列の最上位の順位のものが採用される|
@@ -134,8 +135,8 @@ Validationは診断・実施術式・合併症のマスタを参照するので�
 |Target                     |array  |部位 ["子宮","卵巣","卵管","その他"]|
 |Notification               |string |入力時に表示されるおしらせ|
 |Procedure                  |string |1:1で紐付けられた術式|
-|StartOfYearOfDataset       |integer|適用可能年開始|
-|EndOfYearOfDataset         |integer|適用可能年終了<br/>これより後の年次ではこの病名は無効かつ登録出来ない|
+|VaildFrom                  |integer|適用可能年開始|
+|VaildTo                    |integer|適用可能年終了<br/>これより後の年次ではこの病名は無効かつ登録出来ない|
 
 ### オブジェクト:DiagnosisItems
 DiagnosisMasterから作成される
@@ -156,8 +157,8 @@ DiagnosisMasterから作成される
 |STEM7                      |string |STEM7コード(未実装)|
 |Category                   |array  |良悪性分類 ["腹腔鏡","腹腔鏡悪性","ロボット","ロボット悪性","子宮鏡","卵管鏡"]|
 |Target                     |array  |部位 ["子宮","卵巣","卵管","その他"]|
-|StartOfYearOfDataset       |string |適用可能年開始|
-|EndOfYearOfDataset         |string |適用可能年終了<br/>これより後の年次ではこの術式はこの区分は無効かつ登録出来ない|
+|VaildFrom                  |string |適用可能年開始|
+|VaildTo                    |string |適用可能年終了<br/>これより後の年次ではこの術式はこの区分は無効かつ登録出来ない|
 |Ditto                      |array  |同時に入力できない同一手技に相当する手技名|
 |AdditionalProcedure        |string |同時に展開を行う関連術式<br/>基本的には同一の選択チェーン内にある|
 |DescriptionTitle           |string |補助情報の見出し|

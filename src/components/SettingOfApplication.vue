@@ -1,6 +1,6 @@
 <template>
   <div class="setting-section">
-    <div class="title-section">アプリケーションの設定</div>
+    <div class="title-section">パスワード認証の設定</div>
     <div class="subtitle-section"><span>アプリケーション開始時の認証設定</span></div>
     <InputSwitchField
       v-model="UseAuthentication"

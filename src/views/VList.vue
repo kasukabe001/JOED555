@@ -15,6 +15,8 @@
       <Caseitem v-for="uid in Uids" :key="uid" :uid="uid" />
     </div>
 
+    <WelcomeBanner v-if="ShowWelcomeBanner"></WelcomeBanner>
+
     <router-view></router-view>
   </div>
 </template>
@@ -22,11 +24,12 @@
 <script>
 import Caseitem from '@/components/Caseitem'
 import Drawer from '@/components/Drawer'
+import WelcomeBanner from '@/components/Molecules/WelcomeBanner'
 
 export default {
   name: 'ViewList',
   components: {
-    Caseitem, Drawer
+    Caseitem, Drawer, WelcomeBanner
   },
   mounted () {
     // routerのモードにかかわらずhashが効果をもたらすようにscrollを代替する
@@ -42,6 +45,9 @@ export default {
   computed: {
     Uids () {
       return this.$store.getters.GetUids
+    },
+    ShowWelcomeBanner () {
+      return this.$store.state.ShowWelcomeBanner
     }
   },
   methods: {

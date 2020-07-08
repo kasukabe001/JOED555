@@ -13,6 +13,7 @@ const store = new Vuex.Store({
   },
   state: {
     ApplicationVersion: '5.00.0626.prealpha',
+    ShowWelcomeBanner: true,
     DatabaseInstance: undefined,
     // 表示されるデータのキャッシュ
     DataStore: [],
@@ -114,8 +115,12 @@ const store = new Vuex.Store({
     // @param {Object}
     SetViewSettings (state, payload) {
       state.preservedViewSettings = payload
-    }
+    },
 
+    // バナーを消す
+    HideWelcome (state) {
+      state.ShowWelcomeBanner = false
+    }
   },
 
   actions: {

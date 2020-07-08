@@ -7,6 +7,10 @@ export default {
     },
     ItemValue: {
       type: Object
+    },
+    year: {
+      type: String,
+      default: ''
     }
   },
   data () {
@@ -19,7 +23,7 @@ export default {
     }
   },
   mounted () {
-    this.ExpandEditsection = (this.ItemValue.UserTyped === true)
+    this.ExpandEditsection = (this.ItemValue && this.ItemValue.UserTyped === true)
   },
   computed: {
     TrimmedEditableItem () {

@@ -1,7 +1,10 @@
 // eslint-disable-next-line no-unused-vars
 export default class SelectionTree {
-  constructor (initialTree = {}) {
+  #YearOfThisTree
+
+  constructor (initialTree = {}, YearOfMasterDataset = '0000') {
     Object.assign(this, initialTree)
+    this.#YearOfThisTree = YearOfMasterDataset
   }
 
   /*
@@ -27,17 +30,22 @@ export default class SelectionTree {
     }
   }
   */
-  Categories () {
-    return Object.getOwnPropertyNames(this)
+  getMasterYear () {
+    return this.#YearOfThisTree
   }
 
-  Targets (category = '') {
+  Categories (year = this.#YearOfThisTree) {
+    return Object.keys(this) // getOwnPropertyNames
+  }
+
+  Targets (category = '', year = this.#YearOfThisTree) {
     return category !== '' ? Object.keys(this[category]) : []
   }
 
-  Candidates (category = '', target = '') {
+  Candidates (category = '', target = '', year = '') {
+    const searchYear = year !== '' ? year : this.#YearOfThisTree
     return (category !== '' && target !== '')
-      ? this[category][target].map(item => SelectionTree.handleTreeItem(item))
+      ? this[category][target].map(item => SelectionTree.handleTreeItem(item, 'Text', searchYear)).filter(item => item !== undefined)
       : []
   }
 
@@ -47,15 +55,61 @@ export default class SelectionTree {
       : undefined
   }
 
-  getItemByName (category = '', target = '', name = '') {
+  getItemByName (category = '', target = '', name = '', year = this.#YearOfThisTree) {
     return this.getItemByIndex(category, target,
-      this[category][target].findIndex(item => SelectionTree.handleTreeItem(item) === name))
+      this[category][target].findIndex(item => SelectionTree.handleTreeItem(item, 'Text', year) === name))
   }
 
-  static handleTreeItem (item, attribute = 'Text') {
+  // 指定カテゴリで平坦化したリスト項目を取得する
+  //
+  // @param {string} カテゴリ
+  // @param {string} データセットの参照年指定(デフォルトは最新)
+  flatten (selectedCategory = '', year = this.#YearOfThisTree) {
+    const temporaryArray = []
+    for (const category of Object.keys(this)) { // getOwnPropertyNames
+      if (selectedCategory === '' || category === selectedCategory) {
+        for (const target of Object.keys(this[category])) {
+          for (const item of this[category][target]) {
+            temporaryArray.push(SelectionTree.handleTreeItem(item), 'Text', year)
+          }
+        }
+      }
+    }
+    return temporaryArray
+  }
+
+  // カテゴリ・対象臓器ツリーを検索して列挙する
+  //
+  // @param {string} 対象
+  // @param {string} データセットの参照年指定(デフォルトは最新)
+  findItemByName (name, year = this.#YearOfThisTree) {
+    for (const category of Object.keys(this)) { // getOwnPropertyNames
+      for (const target of Object.keys(this[category])) {
+        for (const item of this[category][target]) {
+          if (SelectionTree.handleTreeItem(item, 'Text', year) === name) {
+            return { Text: name, Chain: [category, target] }
+          }
+        }
+      }
+    }
+    return undefined
+  }
+
+  // 選択ツリーの３層目の値を取得する
+  //
+  // @param {object, sting} ３層目の値
+  // @param {string}  Text, Ditto, など
+  // @param {string}  データセットの参照年指定
+  static handleTreeItem (item, attribute = 'Text', year = '') {
     if (typeof item === 'object') {
-      if (attribute === 'key') {
-        return Object.keys(item)[0]
+      if (year !== '') {
+        console.log('Year is given:', year)
+        if (item.VaildTo && year > item.VaildTo) {
+          return undefined
+        }
+        if (item.VaildFrom && year < item.VaildFrom) {
+          return undefined
+        }
       }
       return item[attribute]
     } else {
@@ -65,32 +119,5 @@ export default class SelectionTree {
         return undefined
       }
     }
-  }
-
-  flatten (selectedCategory = '') {
-    const temporaryArray = []
-    for (const category of Object.getOwnPropertyNames(this)) {
-      if (selectedCategory === '' || category === selectedCategory) {
-        for (const target of Object.keys(this[category])) {
-          for (const item of this[category][target]) {
-            temporaryArray.push(SelectionTree.handleTreeItem(item))
-          }
-        }
-      }
-    }
-    return temporaryArray
-  }
-
-  findItemByName (name) {
-    for (const category of Object.getOwnPropertyNames(this)) {
-      for (const target of Object.keys(this[category])) {
-        for (const item of this[category][target]) {
-          if (SelectionTree.handleTreeItem(item) === name) {
-            return { Text: name, Chain: [category, target] }
-          }
-        }
-      }
-    }
-    return undefined
   }
 }

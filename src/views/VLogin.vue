@@ -10,7 +10,7 @@
         <label>
           パスワード :
           <el-badge value="パスワードが違います" :hidden="!LoginFailed">
-            <input type="password" v-model="Password" id="password-entry-box" :disabled="AuthenticationFree" />
+            <input type="password" v-model="Password" id="password-entry-box" @keyup.13="PerformAuthentication" :disabled="AuthenticationFree" />
           </el-badge>
         </label>
       </div>

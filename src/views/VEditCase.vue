@@ -9,8 +9,8 @@
           <InputProcedureTime v-model="CaseData.ProcedureTime" />
         </div>
         <div class="edit-top-right">
-          <InputTextField title="腫瘍登録番号" v-model="CaseData.JSOGId" placeholder="日産婦腫瘍登録番号" />
-          <InputTextField title="NCD症例識別コード" v-model="CaseData.NCDId" placeholder="ロボット支援下手術症例コード" />
+          <InputTextField title="腫瘍登録番号" v-model="CaseData.JSOGId" placeholder="腫瘍登録患者No." />
+          <InputTextField title="NCD症例識別コード" v-model="CaseData.NCDId" placeholder="NCD症例識別コード" />
           <div> <!-- spacer -->
           </div>
           <InputNumberField title="年齢" :required="true" v-model="CaseData.Age" :min="1" />
@@ -43,19 +43,26 @@
       <el-button icon="el-icon-caret-right" size="medium" circle id="MoveNext" v-if="IsEditingExistingItem" :disabled="!Nexts[1]" @click="CancelEditing(+1)"></el-button>
 
       <div class="edit-controls">
-        <div>
-          <el-button type="primary" icon="el-icon-arrow-left" @click="CancelEditing()">戻る</el-button>
+        <div class="edit-controls-left">
+          <el-button type="warning" icon="el-icon-warning" v-if="CaseData.Notification">入力内容の確認が必要です.</el-button>
         </div>
-        <el-dropdown split-button type="primary" @click="CommitCase()" @command="CommitCaseAndGo">
-          編集内容を保存
-          <el-dropdown-menu slot="dropdown">
-            <el-dropdown-item command="prev" v-if="IsEditingExistingItem && Nexts[0]">保存して前へ</el-dropdown-item>
-            <el-dropdown-item command="next" v-if="IsEditingExistingItem && Nexts[1]">保存して次へ</el-dropdown-item>
-            <el-dropdown-item command="new">保存して新規作成</el-dropdown-item>
-          </el-dropdown-menu>
-        </el-dropdown>
-        <div v-if="IsEditingExistingItem">
-          <el-button type="danger" icon="el-icon-delete" @click="RemoveCase()">削除</el-button>
+        <div class="edit-controls-right">
+          <div>
+            <el-button type="primary" icon="el-icon-arrow-left" @click="CancelEditing()">戻る</el-button>
+          </div>
+          <div>
+            <el-dropdown split-button type="primary" @click="CommitCase()" @command="CommitCaseAndGo">
+              編集内容を保存
+              <el-dropdown-menu slot="dropdown">
+                <el-dropdown-item command="prev" v-if="IsEditingExistingItem && Nexts[0]">保存して前へ</el-dropdown-item>
+                <el-dropdown-item command="next" v-if="IsEditingExistingItem && Nexts[1]">保存して次へ</el-dropdown-item>
+                <el-dropdown-item command="new">保存して新規作成</el-dropdown-item>
+              </el-dropdown-menu>
+            </el-dropdown>
+          </div>
+          <div v-if="IsEditingExistingItem">
+            <el-button type="danger" icon="el-icon-delete" @click="RemoveCase()">削除</el-button>
+          </div>
         </div>
       </div>
     </div>
@@ -75,8 +82,10 @@ import InputTextField from '@/components/Molecules/InputTextField'
 import InputNumberField from '@/components/Molecules/InputNumberField'
 import InputProcedureTime from '@/components/Molecules/InputProcedureTime'
 import InputDateOfProcedure from '@/components/Molecules/InputDateOfProcedure'
+
 import { ZenToHan } from '@/modules/ZenHanChars'
 import Popups from '@/modules/Popups'
+import { CategoryTranslation } from '@/modules/CaseValidater'
 
 export default {
   name: 'ViewEditCase',
@@ -109,7 +118,8 @@ export default {
         PresentAE: true,
         Diagnoses: [],
         Procedures: [],
-        AEs: []
+        AEs: [],
+        Notification: ''
       },
       ValidationStatus: [false, false, false],
       Nexts: [0, 0],
@@ -167,11 +177,14 @@ export default {
     OpenEditView (target, params = {}) {
       const index = params.ItemIndex !== undefined ? params.ItemIndex : -1
       const value = params.ItemValue || {}
+      const editingYear = this.CaseData.DateOfProcedure.substr(0, 4)
+      console.log('editingYear is', editingYear)
       this.$router.push({
         name: target,
         params: {
           ItemIndex: index,
-          ItemValue: value
+          ItemValue: value,
+          year: editingYear
         }
       })
     },
@@ -293,16 +306,8 @@ export default {
           if (!this.ValidationStatus[index]) throw new Error(Sections[index] + 'の入力を確認して下さい.')
         }
 
-        const CategoryTranslator = {
-          腹腔鏡: '腹腔鏡',
-          ロボット: '腹腔鏡',
-          腹腔鏡悪性: '腹腔鏡悪性',
-          ロボット悪性: '腹腔鏡悪性',
-          子宮鏡: '子宮鏡',
-          卵管鏡: '卵管鏡'
-        }
         const validateDiagnosisAndProcedure =
-          this.CaseData.Diagnoses[0].Chain[0] === CategoryTranslator[this.CaseData.Procedures[0].Chain[0]]
+          CategoryTranslation[this.CaseData.Diagnoses[0].Chain[0]] === CategoryTranslation[this.CaseData.Procedures[0].Chain[0]]
         if (!validateDiagnosisAndProcedure) throw new Error('主たる術後診断と主たる実施術式は同一カテゴリである必要があります.')
 
         const newItemObject = {}
@@ -387,12 +392,19 @@ div.vdp-datepicker__calendar
   position: absolute
   top: 70px
   right: 10px
-
 div.edit-controls
   position: relative
   text-align: right
   padding-top: 16px
   padding-bottom: 8px
+  display: flex
+  flex-direction: row
+  justify-content: space-between
+div.edit-controls-left
+  display: flex
+  flex-direction: row
+  justify-content: flex-start
+div.edit-controls-right
   display: flex
   flex-direction: row
   justify-content: flex-end

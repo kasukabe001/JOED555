@@ -113,7 +113,7 @@ export default class DbItems {
     const temporaryItem = {}
     const propsToExport = [
       'Age', 'JSOGId', 'NCDId',
-      'DateOfProcedure', 'DateOfProcedure', 'ProcedureTime', 'PresentAE', 'TypeOfProcedure',
+      'ProcedureTime', 'PresentAE', 'TypeOfProcedure',
       'Imported'
     ]
     if (params.exportAllfields) {
@@ -121,7 +121,7 @@ export default class DbItems {
       params.spliceDateOfProcedure = false
     }
     if (!params.spliceDateOfProcedure) {
-      propsToExport.splice(3, 'DateOfProcedure')
+      propsToExport.splice(3, 0, 'DateOfProcedure')
     }
 
     temporaryItem.UniqueID = [InstituteId, item.DateOfProcedure.substring(0, 4), item.SequentialId].join('-')
