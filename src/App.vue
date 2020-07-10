@@ -9,7 +9,7 @@ export default {
   created () {
     this.$store.commit('initDatabase')
     this.$store.dispatch('ReloadDatastore')
-    this.$store.commit('LoadPreferences')
+    this.$store.dispatch('system/LoadPreferences')
 
     // this.$router.push('/') // comment out in Electron environment
   },

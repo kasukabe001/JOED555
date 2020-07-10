@@ -87,21 +87,6 @@ export default class DbItems {
     return temporaryArray
   }
 
-  // 症例データの検証
-
-  static checkConsistency (caseItem, exportOnly = false) {
-    // 必須入力項目
-    const BasicInformations =
-      caseItem.Age > 0 &&
-      !!caseItem.InstitutionalPatientId &&
-      !!caseItem.DateOfProcedure &&
-      !!caseItem.ProcedureTime
-
-    const Year = caseItem.substr(0, 4)
-    console.log(Year)
-    return BasicInformations
-  }
-
   // 症例データからエクスポート用のデータを成形する
   //
   // UniqueID を付与する
@@ -109,22 +94,35 @@ export default class DbItems {
   // @Param Object
   // @Param String
   // @Param Object
-  static exportCase (item = {}, InstituteId = '99999', params = { spliceDateOfProcedure: false, exportAllfields: false }) {
+  static exportCase (
+    item = {},
+    InstituteId = '99999',
+    params = {
+      spliceDateOfProcedure: false,
+      exportAllfields: false
+    }
+  ) {
     const temporaryItem = {}
     const propsToExport = [
       'Age', 'JSOGId', 'NCDId',
       'ProcedureTime', 'PresentAE', 'TypeOfProcedure',
       'Imported'
     ]
-    if (params.exportAllfields) {
-      propsToExport.splice(3, 0, 'InstitutionalPatientId', 'Name')
-      params.spliceDateOfProcedure = false
-    }
+
     if (!params.spliceDateOfProcedure) {
       propsToExport.splice(3, 0, 'DateOfProcedure')
     }
 
-    temporaryItem.UniqueID = [InstituteId, item.DateOfProcedure.substring(0, 4), item.SequentialId].join('-')
+    if (params.exportAllfields) {
+      propsToExport.splice(3, 0, 'InstitutionalPatientId', 'Name')
+      params.spliceDateOfProcedure = false
+    }
+
+    temporaryItem.UniqueID = [
+      InstituteId,
+      item.DateOfProcedure.substring(0, 4),
+      item.SequentialId
+    ].join('-')
 
     for (const prop of propsToExport) {
       if (item[prop] !== undefined) {

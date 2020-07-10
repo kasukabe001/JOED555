@@ -31,8 +31,13 @@ export default {
   components: {
     Caseitem, Drawer, WelcomeBanner
   },
+  created () {
+    if (this.$store.state.ShowWelcomeBanner && !this.$store.getters['system/ShowWelcomeMessage']) {
+      this.$store.commit('HideWelcome')
+    }
+  },
   mounted () {
-    // routerのモードにかかわらずhashが効果をもたらすようにscrollを代替する
+    // routerのモードにかかわらずhashが効果をもたらすようにscrollを代替 - #hashが中心になるようにスクロールする
     if (this.$route.hash && document.querySelector(this.$route.hash)) {
       document.querySelector(this.$route.hash).scrollIntoView({ block: 'center' })
     }

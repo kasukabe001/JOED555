@@ -12,8 +12,7 @@ const store = new Vuex.Store({
     system, password
   },
   state: {
-    ApplicationVersion: '5.00.0626.prealpha',
-    ShowWelcomeBanner: true,
+    ApplicationVersion: '5.00.0708.prealpha',
     DatabaseInstance: undefined,
     // 表示されるデータのキャッシュ
     DataStore: [],
@@ -23,6 +22,8 @@ const store = new Vuex.Store({
     SortOrder: {
       SequentialId: -1
     },
+    // Listの表示状態の待避
+    ShowWelcomeBanner: true,
     preservedViewSettings: {}
   },
   getters: {
@@ -67,7 +68,7 @@ const store = new Vuex.Store({
         return FilterdItems[0]
       }
     },
-    //
+    // VListのフィルター設定オブジェクトの待避
     //
     //
     GetViewSettings (state) {
@@ -117,7 +118,9 @@ const store = new Vuex.Store({
       state.preservedViewSettings = payload
     },
 
-    // バナーを消す
+    // VListでのメッセージバナーを表示しないようにする.(再表示は再起動しない限りしない)
+    //
+    //
     HideWelcome (state) {
       state.ShowWelcomeBanner = false
     }

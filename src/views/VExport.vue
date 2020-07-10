@@ -88,7 +88,7 @@ export default {
         })
         .then(_ => {
           this.ProcessingStep++
-          return new Promise((resolve) => { resolve() }) // this.CheckConsistency()
+          return new Promise((resolve) => { resolve() })
         })
         .then(_ => {
           this.ProcessingStep++

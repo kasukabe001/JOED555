@@ -103,7 +103,6 @@ export default class SelectionTree {
   static handleTreeItem (item, attribute = 'Text', year = '') {
     if (typeof item === 'object') {
       if (year !== '') {
-        console.log('Year is given:', year)
         if (item.VaildTo && year > item.VaildTo) {
           return undefined
         }
