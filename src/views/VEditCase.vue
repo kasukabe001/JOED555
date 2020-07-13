@@ -13,7 +13,7 @@
           <InputTextField title="NCD症例識別コード" v-model="CaseData.NCDId" placeholder="NCD症例識別コード" />
           <div> <!-- spacer -->
           </div>
-          <InputNumberField title="年齢" :required="true" v-model="CaseData.Age" :min="1" />
+          <InputNumberField title="年齢" :required="true" v-model="CaseData.Age" :min="1" :max="120" />
         </div>
       </div>
 

@@ -3,8 +3,8 @@
     <div id="welcome-banner-dialog">
       <div id="welcome-banner-title">JOED5へようこそ</div>
       <div id="welcome-banner-text">
-        症例合併症登録にご協力頂きありがとうございます。<br/>
-        症例登録は、右上の<span class="welcome-banner-elementIcon">&#xe6d9;</span>ボタンを押して開始して下さい.
+        症例合併症登録にご協力頂きありがとうございます.<br/>
+        症例登録は、右上の<span class="welcome-banner-elementIcon">&#xe6d9;</span>ボタンを押して開始して下さい.<br/>
         リストのソート・初期設定など各種機能は左上の<span class="welcome-banner-elementIcon">&#xe798;</span>ボタンからご利用いただけます.<br/>
         <br />
         お問い合わせは学会の症例登録ページからおねがいいたします.<br />
@@ -27,6 +27,9 @@
 <script>
 export default {
   name: 'WelcomeBanner',
+  mounted () {
+    window.addEventListener('keyup', this.KeyUpEventHandler)
+  },
   computed: {
     ShowWelcomeMessage: {
       get () {
@@ -38,7 +41,13 @@ export default {
     }
   },
   methods: {
+    KeyUpEventHandler (event) {
+      if (event.which === 27) {
+        this.Close()
+      }
+    },
     Close () {
+      window.removeEventListener('keyup', this.KeyUpEventHandler)
       this.$store.dispatch('system/SavePreferences')
       this.$store.commit('HideWelcome')
     }
@@ -53,7 +62,7 @@ export default {
   right: 0px
   bottom: 0px
   z-index: 9998
-  background: transparent
+  background: rgba(0,0,0,0.46)
 
 #welcome-banner-dialog
   position: absolute
@@ -105,6 +114,8 @@ export default {
   height: 1rem
   font-family: 'element-icons'
   font-size: 1.2rem
+  &:hover
+    font-weight: bold
 
 .welcome-banner-elementIcon
   font-family: 'element-icons'

@@ -1,22 +1,26 @@
 <template>
   <div>
     <div class="label"><span>{{title}}</span></div>
-    <div class="field number">
-      <el-input-number
-        v-model="InputText"
-        controls-position="right"
-        size="mini"
-        :placeholder="placeholder"
-        :min="min"
-        :max="max"
-        @change="HandleRequired()"
-        :disabled="disabled"
-        />
+    <div class="field number-field">
+      <div>
+        <input type="text"
+          v-model="InputText"
+          :placeholder="placeholder"
+          :min="min"
+          :max="max"
+          :class="AdditionalClass"
+          :disabled="disabled"
+          />
+        <span class="number-field__control number-field__decrease" @click="Decrease">&#xe790;</span>
+        <span class="number-field__control number-field__increase" @click="Increase">&#xe78f;</span>
+      </div>
     </div>
 </div>
 </template>
 
 <script>
+import { ZenToHanNumbers } from '@/modules/ZenHanChars'
+
 export default {
   name: 'InputNumberField',
   props: {
@@ -43,29 +47,51 @@ export default {
       default: false
     }
   },
-  mounted () {
-    this.HandleRequired()
-  },
   computed: {
     InputText: {
       get () { return this.value },
       set (newvalue) {
-        this.$emit('input', newvalue)
+        this.$emit('input', ZenToHanNumbers(newvalue))
       }
+    },
+    AdditionalClass () {
+      return !this.value ? 'vacant' : ''
     }
   },
   methods: {
-    HandleRequired () {
-      if (this.required === false) return
-
-      const inputElement = this.$el.getElementsByClassName('el-input__inner')[0]
-      if (this.value === undefined) {
-        inputElement.classList.add('vacant')
-      } else {
-        inputElement.classList.remove('vacant')
+    Increase () {
+      const newValue = Number(ZenToHanNumbers(this.value) || 0) + 1
+      this.InputText = (newValue >= this.max ? this.max : newValue).toString(10)
+    },
+    Decrease () {
+      if (this.value) {
+        const newValue = Number(ZenToHanNumbers(this.value)) - 1
+        this.InputText = (newValue <= this.min ? this.min : newValue).toString(10)
       }
-      this.$nextTick()
     }
   }
 }
 </script>
+
+<style lang="sass">
+div.number-field > div
+  position: relative
+  margin-right: 50%
+span.number-field__control
+  position: absolute
+  right: 2px
+  width: 28px
+  border-left: solid 1px var(--border-color-base)
+  text-align: center
+  font-family: 'element-icons'
+  line-heigt: 14px
+span.number-field__increase
+  top: 2px
+  border-bottom: solid 1px var(--border-color-base)
+  height: 12px
+span.number-field__decrease
+  bottom: 2px
+  line-height: 12px
+span.number-field__disabled
+  color: var(--border-color-base)
+</style>

@@ -533,6 +533,7 @@
           <span>転帰</span>
         </div>
         <div class="w80">
+          <div v-show="ShowByGrading(0)"><i class="el-icon-more" style="transform: rotate(90deg)"></i></div>
           <div v-show="ShowByGrading(1)">
             <el-divider class="AE" content-position="left">Grade 1-2相当</el-divider>
             <div>
@@ -703,9 +704,8 @@ export default {
       )
     },
     ShowByGrading () {
-      const self = this
-      return function (value) {
-        return ((self.AE.Grade ? Number(self.AE.Grade[0]) : 0) >= value)
+      return value => {
+        return this.AE.Grade ? Number(this.AE.Grade[0]) >= (value || undefined) : !value
       }
     }
   },

@@ -4,7 +4,7 @@ function UnicodeToASCII (c) {
   return String.fromCharCode(c.charCodeAt(0) - 0xFEE0)
 }
 
-export function ZenToHan (str) {
+export function ZenToHan (str = '') {
   let stringargument = str.toString()
 
   stringargument = stringargument
@@ -14,7 +14,7 @@ export function ZenToHan (str) {
   return stringargument
 }
 
-export function ZenToHanNumbers (str) {
+export function ZenToHanNumbers (str = '') {
   let stringargument = str.toString()
 
   stringargument = stringargument
@@ -24,7 +24,7 @@ export function ZenToHanNumbers (str) {
   return stringargument
 }
 
-export function FormatDate (givenDateStr) {
+export function FormatDate (givenDateStr = '') {
   const returnDateStr = givenDateStr.replace(/\s/g, '')
     .replace(/^(20[0-9][0-9])[/-](0[1-9]|1[0-2])[/-](0[1-9]|[12][0-9]|3[0-1])$/, '$1-$2-$3')
 
