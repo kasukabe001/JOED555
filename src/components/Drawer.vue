@@ -54,7 +54,7 @@ div.menu-item-content
     width: 100%
     margin: 0.3rem 0
     height: 2rem
-  input
+  input[type="text"]
     width: 100%
     height: 2rem
 

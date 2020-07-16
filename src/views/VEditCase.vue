@@ -22,21 +22,21 @@
         @addnewitem="OpenEditView('diagnosis')"
         @edititem="OpenEditView('diagnosis', $event)"
         @removeitem="RemoveListItem('Diagnoses', $event)"
-        @validate="setValidationStatus(0, $event)" />
+      />
 
       <SectionProcedures
         :container.sync="CaseData.Procedures"
         @addnewitem="OpenEditView('procedure')"
         @edititem="OpenEditView('procedure', $event)"
         @removeitem="RemoveListItem('Procedures', $event)"
-        @validate="setValidationStatus(1, $event)" />
+      />
 
       <SectionAEs
         :container.sync="CaseData.AEs"
         :optionValue.sync="isNoAEs"
         @addnewitem="OpenEditView('AE')"
         @removeitem="RemoveListItem('AEs', $event)"
-        @validate="setValidationStatus(2, $event)" />
+      />
 
       <!-- Controles -->
       <el-button icon="el-icon-caret-left" size="medium" circle id="MovePrev" v-if="IsEditingExistingItem" :disabled="!Nexts[0]" @click="CancelEditing(-1)"></el-button>
@@ -74,7 +74,7 @@
 </template>
 
 <script>
-import DbItems from '@/modules/DbItemHandler'
+// import DbItems from '@/modules/DbItemHandler'
 import SectionDiagnoses from '@/components/SectionDiagnoses'
 import SectionProcedures from '@/components/SectionProcedures'
 import SectionAEs from '@/components/SectionAEs'
@@ -85,7 +85,11 @@ import InputDateOfProcedure from '@/components/Molecules/InputDateOfProcedure'
 
 import { ZenToHan } from '@/modules/ZenHanChars'
 import Popups from '@/modules/Popups'
-import { CategoryTranslation } from '@/modules/CaseValidater'
+import {
+  CheckBasicInformations, ValidateAdditionalInformations,
+  CheckSections, ValidateCategoryMatch,
+  CheckDupsInDiagnoses, CheckDupsInProcedures, ValidateAEs
+} from '@/modules/CaseValidater'
 
 export default {
   name: 'ViewEditCase',
@@ -121,7 +125,6 @@ export default {
         AEs: [],
         Notification: ''
       },
-      ValidationStatus: [false, false, false],
       Nexts: [0, 0],
       Edited: false
     })
@@ -195,10 +198,6 @@ export default {
       }
     },
 
-    setValidationStatus (target, value) {
-      this.ValidationStatus.splice(target, 1, value)
-    },
-
     EditListItem (target, index, value) {
       this.UpdateList(this.CaseData[target], index, value)
       if (target === 'AEs') {
@@ -270,8 +269,8 @@ export default {
         .catch(e => Popups.alert(e.message))
     },
     CommitCaseAndGo (to = '') {
-      // 新規(uid = '0')→新規(uid = '0')ではApp.vueにあるRouterKeyが重複する.
-      // uid = '00' も uid > 0 がfalseで新規扱いになるのでそれを利用する.propをstringsで渡すのがミソ.
+      // 新規(uid = '0')→新規(uid = '0')ではApp.vueで定義したRouterKeyが重複するための quick hack.
+      // uid = '00' も uid > 0 がfalseで新規扱いになるのでそれを利用する.
       this.StoreCase()
         .then(() => {
           switch (to) {
@@ -292,55 +291,84 @@ export default {
     },
 
     async StoreCase () {
-      try {
-        const validateBasicInformations =
-          this.CaseData.Age > 0 &&
-          !!this.CaseData.InstitutionalPatientId.trim() &&
-          !!this.CaseData.DateOfProcedure &&
-          !!this.CaseData.ProcedureTime
-        if (!validateBasicInformations) throw new Error('基本情報の入力が不足しています.')
+      // データベース登録に用いるドキュメントを生成
 
-        const Sections = ['手術診断', '実施手術', '合併症']
-        for (const index in Sections) {
-          if (!this.ValidationStatus[index]) throw new Error(Sections[index] + 'の入力を確認して下さい.')
-        }
+      const newDocument = {}
+      Object.assign(newDocument, this.CaseData)
 
-        const validateDiagnosisAndProcedure =
-          CategoryTranslation[this.CaseData.Diagnoses[0].Chain[0]] === CategoryTranslation[this.CaseData.Procedures[0].Chain[0]]
-        if (!validateDiagnosisAndProcedure) throw new Error('主たる術後診断と主たる実施術式は同一カテゴリである必要があります.')
+      // 連番 (0 = 新規ドキュメントで連番付与される)
+      newDocument.SequentialId = Number(this.uid)
 
-        const newItemObject = {}
-        Object.assign(newItemObject, this.CaseData)
+      // 警告の削除
+      delete newDocument.Notification
 
-        newItemObject.SequentialId = Number(this.uid)
+      // テキストフィールドの整形(trimと半角英数に置換)
+      newDocument.Name = newDocument.Name.trim()
+      newDocument.InstitutionalPatientId = ZenToHan(newDocument.InstitutionalPatientId.trim()).replace(/[^\d\w-&]/g, '')
 
-        // テキストフィールドの整形
-        newItemObject.Name = newItemObject.Name.trim()
-        newItemObject.InstitutionalPatientId = ZenToHan(newItemObject.InstitutionalPatientId.trim()).replace(/[^\d\w-&]/g, '')
-
-        if (newItemObject.JSOGId.trim() === '') {
-          delete newItemObject.JSOGId
-        } else {
-          newItemObject.JSOGId = ZenToHan(newItemObject.JSOGId.trim())
-        }
-        if (newItemObject.NCDId.trim() === '') {
-          delete newItemObject.NCDId
-        } else {
-          newItemObject.NCDId = ZenToHan(newItemObject.NCDId.trim())
-        }
-
-        // AEsが空白の際は削除
-        if (newItemObject.AEs.length === 0) {
-          delete newItemObject.AEs
-        }
-
-        // 区分コードの抽出
-        newItemObject.TypeOfProcedure = DbItems.getItemChain(newItemObject.Procedures[0])[0]
-
-        return this.$store.dispatch('UpsertItemInDatastore', newItemObject)
-      } catch (error) {
-        return Promise.reject(error)
+      if (newDocument.JSOGId.trim() === '') {
+        delete newDocument.JSOGId
+      } else {
+        newDocument.JSOGId = ZenToHan(newDocument.JSOGId.trim())
       }
+      if (newDocument.NCDId.trim() === '') {
+        delete newDocument.NCDId
+      } else {
+        newDocument.NCDId = ZenToHan(newDocument.NCDId.trim())
+      }
+
+      // AEsが空白の際は削除
+      if (newDocument.AEs.length === 0) {
+        delete newDocument.AEs
+      }
+
+      // 区分コードの抽出
+      newDocument.TypeOfProcedure = newDocument.Procedures[0] && newDocument.Procedures[0].Chain[0]
+
+      return new Promise((resolve, reject) => {
+        Promise.all([
+          new Promise(resolve => {
+            CheckBasicInformations(newDocument)
+              .then(_ => resolve())
+              .catch(error => resolve(error.message))
+          }),
+          new Promise(resolve => {
+            ValidateAdditionalInformations(newDocument)
+              .then(_ => resolve())
+              .catch(error => resolve(error.message))
+          }),
+          new Promise(resolve => {
+            CheckSections(newDocument)
+              .then(_ => ValidateCategoryMatch(newDocument))
+              .then(_ => resolve())
+              .catch(error => resolve(error.message))
+          }),
+          new Promise(resolve => {
+            CheckDupsInDiagnoses(newDocument)
+              .then(_ => resolve())
+              .catch(error => resolve(error.message))
+          }),
+          new Promise(resolve => {
+            CheckDupsInProcedures(newDocument)
+              .then(_ => resolve())
+              .catch(error => resolve(error.message))
+          }),
+          new Promise(resolve => {
+            ValidateAEs(newDocument)
+              .then(_ => resolve())
+              .catch(error => resolve(error.message))
+          })
+        ])
+          .then(errors => {
+            if (errors.filter(item => item).length > 0) {
+              reject(new Error(errors.filter(item => item).join('\n')))
+            } else {
+              this.$store.dispatch('UpsertItemInDatastore', newDocument)
+                .then(_ => resolve())
+                .catch(dberror => reject(dberror))
+            }
+          })
+      })
     }
   }
 }

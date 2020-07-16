@@ -17,21 +17,6 @@ import EditSectionMixins from '@/mixins/EditSectionMixins'
 
 export default {
   name: 'SectionDiagnoses',
-  mixins: [EditSectionMixins],
-  computed: {
-    isDup () {
-      // 重複確認
-      return this.container
-        .map(item => item.Text)
-        .flat()
-        .filter((item, index, self) => self.indexOf(item) !== self.lastIndexOf(item))
-        .length > 0
-    }
-  },
-  methods: {
-    Validate () {
-      this.$emit('validate', this.container.length > 0 && this.isDup === false)
-    }
-  }
+  mixins: [EditSectionMixins]
 }
 </script>

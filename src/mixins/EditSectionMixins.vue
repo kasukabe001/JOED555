@@ -18,14 +18,6 @@ export default {
       default: false
     }
   },
-  watch: {
-    container: {
-      handler () {
-        this.Validate()
-      },
-      immediate: true
-    }
-  },
   computed: {
     ItemContainer: {
       get () {
@@ -59,9 +51,6 @@ export default {
       if (index >= 0) {
         this.$emit('removeitem', index)
       }
-    },
-    Validate () {
-      return true
     }
   }
 }

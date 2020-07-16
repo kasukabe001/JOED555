@@ -34,18 +34,18 @@ export default class SelectionTree {
     return this.#YearOfThisTree
   }
 
-  Categories (year = this.#YearOfThisTree) {
+  Categories () {
     return Object.keys(this) // getOwnPropertyNames
   }
 
-  Targets (category = '', year = this.#YearOfThisTree) {
+  Targets (category = '') {
     return category !== '' ? Object.keys(this[category]) : []
   }
 
   Candidates (category = '', target = '', year = '') {
-    const searchYear = year !== '' ? year : this.#YearOfThisTree
+    if (!year) { year = this.#YearOfThisTree }
     return (category !== '' && target !== '')
-      ? this[category][target].map(item => SelectionTree.handleTreeItem(item, 'Text', searchYear)).filter(item => item !== undefined)
+      ? this[category][target].map(item => SelectionTree.handleTreeItem(item, 'Text', year)).filter(item => item !== undefined)
       : []
   }
 
@@ -55,7 +55,8 @@ export default class SelectionTree {
       : undefined
   }
 
-  getItemByName (category = '', target = '', name = '', year = this.#YearOfThisTree) {
+  getItemByName (category = '', target = '', name = '', year) {
+    if (!year) { year = this.#YearOfThisTree }
     return this.getItemByIndex(category, target,
       this[category][target].findIndex(item => SelectionTree.handleTreeItem(item, 'Text', year) === name))
   }
@@ -64,25 +65,27 @@ export default class SelectionTree {
   //
   // @param {string} カテゴリ
   // @param {string} データセットの参照年指定(デフォルトは最新)
-  flatten (selectedCategory = '', year = this.#YearOfThisTree) {
+  flatten (selectedCategory = '', year) {
+    if (!year) { year = this.#YearOfThisTree }
     const temporaryArray = []
     for (const category of Object.keys(this)) { // getOwnPropertyNames
       if (selectedCategory === '' || category === selectedCategory) {
         for (const target of Object.keys(this[category])) {
           for (const item of this[category][target]) {
-            temporaryArray.push(SelectionTree.handleTreeItem(item), 'Text', year)
+            temporaryArray.push(SelectionTree.handleTreeItem(item, 'Text', year))
           }
         }
       }
     }
-    return temporaryArray
+    return temporaryArray.filter(item => item)
   }
 
   // カテゴリ・対象臓器ツリーを検索して列挙する
   //
   // @param {string} 対象
   // @param {string} データセットの参照年指定(デフォルトは最新)
-  findItemByName (name, year = this.#YearOfThisTree) {
+  findItemByName (name, year) {
+    if (!year) { year = this.#YearOfThisTree }
     for (const category of Object.keys(this)) { // getOwnPropertyNames
       for (const target of Object.keys(this[category])) {
         for (const item of this[category][target]) {

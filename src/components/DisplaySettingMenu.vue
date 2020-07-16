@@ -23,9 +23,28 @@
         inactive-color="#444444" />
     </div>
 
-    <div>表示する内容</div>
-    <div class="menu-item-content w80">
-      <el-select v-model="FilterItems" multiple :clearable="true" placeholder="全て表示する">
+    <div class="subtitle-section">表示する内容</div>
+    <div class="menu-item-content w80" style="border: 2px solid var(--border-color-base)">
+      <div><div><label><input type="checkbox" v-model="isFilterItemsEmpty">全て表示する</label></div></div>
+
+      <div>カテゴリー</div>
+      <div v-for="category in Categories" :key="category">
+        <label><input type="checkbox" v-model="FilterItems" :value="{ field: 'TypeOfProcedure', value: category }">{{category}}</label>
+      </div>
+
+      <div>年次</div>
+      <div v-for="item in FilterYears" :key="item">
+        <label><input type="checkbox" v-model="FilterItems" :value="{ field: 'DateOfProcedure', value: item }">{{item + '年'}}</label>
+      </div>
+
+      <div>情報</div>
+      <div>
+        <label><input type="checkbox" v-model="FilterItems" :value="{ field: 'PresentAE', value: true }">合併症あり</label>
+        <label><input type="checkbox" v-model="FilterItems" :value="{ field: 'Notification', value: true }">警告あり</label>
+      </div>
+
+      <!--
+      <el-select v-model="FilterItems" size="small" multiple :clearable="true" placeholder="全て表示する">
         <el-option-group label="カテゴリ">
           <el-option :value="{ field: 'TypeOfProcedure', value: '腹腔鏡' }" label="腹腔鏡" />
           <el-option :value="{ field: 'TypeOfProcedure', value: '腹腔鏡悪性' }" label="腹腔鏡悪性" />
@@ -42,6 +61,8 @@
           <el-option :value="{ field: 'Notification', value: true }" label="警告あり" />
         </el-option-group>
       </el-select>
+      -->
+
     </div>
     <div class="menu-item-bottom">
       <el-button type="primary" @click="Apply()">設定</el-button>
@@ -51,6 +72,8 @@
 </template>
 
 <script>
+import { CategoryTranslation } from '@/modules/CaseValidater'
+
 export default {
   name: 'DisplaySettingMenu',
   data () {
@@ -59,6 +82,7 @@ export default {
         Item: 'SequentialId',
         Order: -1
       },
+      Categories: Object.keys(CategoryTranslation),
       FilterItems: [],
       // 年次: created()で非同期にロードされる
       FilterYears: []
@@ -76,6 +100,18 @@ export default {
     if (preserved.FilterItems) {
       this.FilterItems.splice(0)
       this.FilterItems.splice(0, 0, ...preserved.FilterItems)
+    }
+  },
+  computed: {
+    isFilterItemsEmpty: {
+      get () {
+        return this.FilterItems.length === 0
+      },
+      set (newvalue) {
+        if (newvalue === true) {
+          this.FilterItems.splice(0)
+        }
+      }
     }
   },
   methods: {

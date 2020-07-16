@@ -1,6 +1,6 @@
 <template>
-  <div class="menu-item">
-    <div class="menu-item-content">
+  <div class="filter-menu">
+    <div class="filter-menu-content">
       <el-select v-model="ComponentFilterItems" multiple clearable placeholder="全て表示する">
         <el-option-group label="カテゴリ">
           <el-option :value="{ field: 'TypeOfProcedure', value: '腹腔鏡' }" label="腹腔鏡" />
@@ -12,7 +12,7 @@
         </el-option-group>
         <el-option-group label="情報">
           <el-option :value="{ field: 'PresentAE', value: true }" label="合併症あり" />
-          <el-option :value="{ field: 'Notification', value: true }" label="警告あり" />
+          <el-option :value="{ field: 'Notification', value: true }" label="通知あり" />
         </el-option-group>
       </el-select>
     </div>
@@ -20,8 +20,14 @@
 </template>
 
 <script>
+import MultipleSelect from '@/components/MultipleSelect'
+
 export default {
   name: 'FilterMenu',
+  components: {
+    // eslint-disable-next-line vue/no-unused-components
+    MultipleSelect
+  },
   props: {
     FilterItems: {
       type: Array,
@@ -40,5 +46,5 @@ export default {
 </script>
 
 <style lang="sass">
-
+.filter-menu
 </style>

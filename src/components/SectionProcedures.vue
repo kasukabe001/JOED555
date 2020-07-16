@@ -20,32 +20,6 @@ import EditSectionMixins from '@/mixins/EditSectionMixins'
 
 export default {
   name: 'SectionProcedures',
-  mixins: [EditSectionMixins],
-  computed: {
-    isDup () {
-      // Ditto/AdditionalProcedureを含む重複確認
-      const procedures = []
-      for (const item of this.container) {
-        procedures.push(item.Text)
-
-        if (item.AdditionalProcedure) {
-          procedures.push(item.AdditionalProcedure.Text)
-        }
-        if (item.Ditto) {
-          procedures.push(item.Ditto)
-        }
-      }
-
-      return procedures
-        .flat()
-        .filter((item, index, self) => self.indexOf(item) !== self.lastIndexOf(item))
-        .length > 0
-    }
-  },
-  methods: {
-    Validate () {
-      this.$emit('validate', this.container.length > 0 && this.isDup === false)
-    }
-  }
+  mixins: [EditSectionMixins]
 }
 </script>

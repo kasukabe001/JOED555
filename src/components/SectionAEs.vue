@@ -43,35 +43,6 @@ export default {
   mixins: [EditSectionMixins],
   components: {
     DescriptionOfAE
-  },
-  watch: {
-    optionValue () {
-      this.Validate()
-    }
-  },
-  methods: {
-    Validate () {
-      // 合併症ありなしと合併症入力の有無との整合性確認
-      const adequacy = (!this.optionValue && this.container.length > 0) ||
-        (this.optionValue && this.container.length === 0)
-
-      // 重複確認
-      const flattenContainer = []
-      for (const item of this.container) {
-        /* if (item.Category === '出血') {
-          flattenContainer.push('出血')
-        } else { */
-        const temporaryTitle = Object.assign([], ...(item.Title || []))
-        const temporaryCause = Object.assign([], ...(item.Cause || []))
-        flattenContainer.push([item.Category, ...temporaryTitle, ...temporaryCause].join(':'))
-        // }
-      }
-      const isDup = flattenContainer
-        .filter((item, index, self) => self.indexOf(item) !== self.lastIndexOf(item))
-        .length > 0
-
-      this.$emit('validate', adequacy && isDup === false)
-    }
   }
 }
 </script>
