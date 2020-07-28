@@ -19,14 +19,17 @@ $--color-text-placeholder: #C0C4CC
 
 // declare CSS vars
 :root
-  --color-primary: $--color-primary
-  --color-text-primary: $--color-text-primary
-  --color-text-regular: $--color-text-regular
-  --color-danger: $--color-danger
-  --border-color-base: $--border-color-base
-  --color-info: $--color-info
-  --color-warning: $--color-warning
-  --color-text-placeholder: $--color-text-placeholder
+  --background-color-list: #FFFFFF
+  --background-color-dialog: #FFFFF0
+  --background-color-hover: #F5F7FA
+  --color-primary: #4A4A4A
+  --color-text-primary: #121212
+  --color-text-regular: #252525
+  --color-danger: #FF3030
+  --border-color-base: #7B7B7B
+  --color-info: #22AAFF
+  --color-warning: #FF8F25
+  --color-text-placeholder: #C0C4CC
 
 html
   font-family: cross-platform-yu-gothic, sans-serif
@@ -49,9 +52,9 @@ input[type="text"],[type="number"],[type="password"]
   font-size: 1rem
   user-select: text
   box-sizing: border-box
-  padding: 2px 5px
+  padding: 1px 4px
   height: 2rem
-  border: 1px solid $--border-color-base
+  border: 2px solid $--border-color-base
   border-radius: 2px
   &:focus
     outline: none
@@ -62,9 +65,9 @@ select
   -webkit-appearance: menulist-button
   box-sizing: border-box
   min-height: 1.5rem
-  border: 1px solid $--border-color-base
+  border: 2px solid $--border-color-base
   border-radius: 2px
-  padding: 2px
+  padding: 1px
   &:focus
     outline: none
 
@@ -150,51 +153,7 @@ div.app-dialog-row
   display: flex
   flex-direction: row
 
-// カスタムボタン
-
-.new-entry-button
-  position: absolute
-  right: 5px
-  bottom: 5px
-  width: 30px
-  height: 30px
-  border: 2px solid $--color-primary
-  border-radius: 5px
-  background: $--background-color-list
-  &::after
-    content: '\e6d9'
-    font-family: 'element-icons'
-    color: $--color-primary
-    font-size: 25px
-    padding-top: 6px
-    padding-left: 3px
-  &:hover
-    border-color: $--color-text-regular
-    &::after
-      color: $--color-text-regular
-
-.open-drawer-button
-  position: absolute
-  right: 5px
-  bottom: 5px
-  width: 30px
-  height: 30px
-  &::after
-    content: '\e798'
-    color: $--color-primary
-    font-family: 'element-icons'
-    font-size: 25px
-    padding-top: 6px
-    padding-left: 3px
-  &:hover
-    &::after
-      color: $--color-text-regular
-
-// EditSection... の共通スタイル
-//
-// SECTION
-//   list-item
-//     [handle] [item-description]
+// EditCase内の各セクションの共通スタイル
 div.section
   position: relative
   background: white
@@ -212,8 +171,8 @@ div.section
     margin: 1px 8px 2px 42px
     div.section-item
       position: relative
-      background: #eeeeee
-      border-left: #eeeeee 2px solid
+      background: var(--color-text-placeholder)
+      border-left: var(--color-text-placeholder) 2px solid
       line-height: 1.5
       padding: 0.5em
       margin-right: 48px
@@ -238,17 +197,7 @@ div.section
   div.section-item-list:first-of-type div.section-item:first-of-type
       border-left: black 2px solid
 
-// EditItem... の編集ビュー部分での共通スタイル
-// <div class="edititem-overlay">
-//   <div class="edititem-overlay-content">
-//     モーダルダイアログの内容を記載
-//     <div class="content-title" />
-//     <div class="flex-content" />
-//             ...
-//     <div class="flex-content" />
-//     <div class="content-bottom" />
-//   </div>
-// </div>
+// EditItemビューの共通スタイル
 div.edititem-overlay
   z-index: 99
   position: fixed !important
@@ -303,14 +252,3 @@ div.content-bottom
     text-align: right
     margin: 2px 0
     height: 2.5em
-
-// elementをoverride
-
-.el-tooltip__popper
-  font-size: 1rem
-  line-height: 1.35rem
-
-div.AE-popper
-  div:nth-child(2),:nth-last-child(2)
-    margin-top: 0.5rem
-

@@ -82,8 +82,9 @@ div.caseitem
   width: 800px
   height: 60px
   border: black 1px solid
+  border-radius: 1.8px
   background-color: white
-  margin-left: 79px
+  margin-left: 59px
   margin-top: 9px
   display: flex
   flex-direction: row

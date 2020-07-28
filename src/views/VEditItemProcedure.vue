@@ -297,8 +297,11 @@ export default {
           temporaryItem.Chain = [this.Category]
           temporaryItem.UserTyped = true
         } else {
-          if (this.TargetOrgan === undefined) {
-            Popups.alert('選択操作でのみ登録が可能です.')
+          if (!this.SelectedItem) {
+            return
+          }
+          if (!this.TargetOrgan) {
+            Popups.alert('選択でのみ登録が可能です.')
             return
           }
           // 選択されたものには適切な付随情報を収納

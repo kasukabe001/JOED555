@@ -166,9 +166,12 @@ export default {
           }
         )
       } else {
+        if (!this.SelectedItem) {
+          return
+        }
         Object.assign(temporaryItem,
           {
-            Text: this.EditableItem,
+            Text: this.SelectedItem,
             Chain: [this.Category, this.TargetOrgan]
           }
         )

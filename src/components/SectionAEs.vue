@@ -30,7 +30,7 @@
         </ItemOfSection>
       </el-tooltip>
     </div>
-    <div class="new-entry-button" @click="AddNewItem()" tabindex="0"></div>
+    <NewEntryButton @click="AddNewItem()" tabindex="0" />
   </div>
 </template>
 

@@ -1,15 +1,16 @@
 <template>
   <div>
-    <div class="open-drawer open-drawer-button" tabindex="0" @click="OpenDrawer"></div>
+    <DrawerButton div-class="open-drawer" tab-index="0" @click="OpenDrawer" />
     <el-drawer
       title="MenuDrawer"
-      size="30rem"
+      size="26rem"
       direction="ltr"
       :with-header="false"
+      :destroy-on-close="true"
       :visible.sync="showMenuDrawer">
       <Drawer @close="CloseDrawer"></Drawer>
     </el-drawer>
-    <div class="list-new-entry new-entry-button" @click="CreateNewEntry()"></div>
+    <NewEntryButton div-class="list-new-entry" tab-index="0" @click="CreateNewEntry()"/>
 
     <div class="itemlist" @keyup.ctrl.65="CreateNewEntry()">
       <Caseitem v-for="uid in Uids" :key="uid" :uid="uid" />
@@ -22,6 +23,8 @@
 </template>
 
 <script>
+import DrawerButton from '@/components/Atoms/AtomDrawerButton.vue'
+import NewEntryButton from '@/components/Atoms/AtomNewEntryButton'
 import Caseitem from '@/components/Caseitem'
 import Drawer from '@/components/Drawer'
 import WelcomeBanner from '@/components/Molecules/WelcomeBanner'
@@ -29,7 +32,7 @@ import WelcomeBanner from '@/components/Molecules/WelcomeBanner'
 export default {
   name: 'ViewList',
   components: {
-    Caseitem, Drawer, WelcomeBanner
+    DrawerButton, NewEntryButton, Caseitem, Drawer, WelcomeBanner
   },
   created () {
     if (this.$store.state.ShowWelcomeBanner && !this.$store.getters['system/ShowWelcomeMessage']) {
@@ -70,10 +73,6 @@ export default {
 </script>
 
 <style lang="sass">
-/* ========================================
-    症例一覧画面  VListOfCaseitems
-   ======================================== */
-// リストコンテナ
 div.itemlist
   position: absolute
   left: 0
@@ -91,12 +90,12 @@ div.itemlist
 div.open-drawer
   z-index: 10
   position: fixed
-  top: 9px
-  left: 5px
+  top: 14px
+  left: 9px
 
 div.list-new-entry
   z-index: 10
   position: fixed
-  top: 9px
-  left: 935px
+  top: 14px
+  left: 895px
 </style>

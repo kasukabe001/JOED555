@@ -38,7 +38,8 @@ export default {
       get () { return this.value.SortItem },
       set (newvalue) {
         this.value.SortItem = newvalue
-        this.$emit('update', this.value) }
+        this.$emit('update', this.value)
+      }
     },
     SortOrder: {
       get () { return this.value.SortOrder },

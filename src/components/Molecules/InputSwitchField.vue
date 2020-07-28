@@ -6,10 +6,10 @@
         v-model="SelectedValue"
         :inactive-text="texts[0]"
         :inactive-value="values[0]"
-        inactive-color="$--color-primary"
+        inactive-color="var(--color-primary)"
         :active-text="texts[1]"
         :active-value="values[1]"
-        active-color="$--color-primary"
+        active-color="var(--color-primary)"
         :disabled="disabled"
       />
     </div>

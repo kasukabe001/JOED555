@@ -7,6 +7,13 @@ export default {
     InstitutionID: '',
     JSOGoncologyboardID: '',
     ShowWelcomeMessage: true,
+    DefaultViewSetting: {
+      Filter: [],
+      Sort: {
+        field: 'SequentialId',
+        order: -1
+      }
+    },
     EnabledJSOGId: true,
     EnabledNCDId: true
   },

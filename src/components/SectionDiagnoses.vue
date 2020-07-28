@@ -8,7 +8,7 @@
         <ItemOfSection :item="item" @remove="RemoveItem(index)" @edit="EditItem(index, item)"/>
       </div>
     </draggable>
-    <div class="new-entry-button" @click="AddNewItem()" tabindex="0"></div>
+    <NewEntryButton @click="AddNewItem()" tabindex="0" />
   </div>
 </template>
 

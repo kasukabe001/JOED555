@@ -12,19 +12,20 @@ const store = new Vuex.Store({
     system, password
   },
   state: {
-    ApplicationVersion: '5.00.0708.prealpha',
+    ApplicationVersion: '5.00.0728.prealpha.vueserve',
     DatabaseInstance: undefined,
     // 表示されるデータのキャッシュ
     DataStore: [],
     Filter: {
       SequentialId: { $gt: 0 }
     },
-    SortOrder: {
+    Sort: {
       SequentialId: -1
     },
     // Listの表示状態の待避
     ShowWelcomeBanner: true,
-    preservedViewSettings: {}
+    defaultViewSettings: { Sort: { Item: 'SequentialId', Order: -1 }, Filter: [] },
+    preservedViewSettings: { Sort: { Item: 'SequentialId', Order: -1 }, Filter: [] }
   },
   getters: {
     ApplicationVersion (state) {
@@ -97,11 +98,11 @@ const store = new Vuex.Store({
       state.DataStore = payload
     },
 
-    // SortOrderの設定
+    // Sortの設定
     //
     // @param {Object}
-    SetSortOrder (state, payload) {
-      state.SortOrder = payload
+    SetSort (state, payload) {
+      state.Sort = payload
     },
 
     // Filterの設定
@@ -111,11 +112,66 @@ const store = new Vuex.Store({
       state.Filter = payload
     },
 
-    // 表示設定の待避
+    // 表示設定の設定と待避
     //
-    // @param {Object}
+    // @param {Object} Sort.Item, Sort.Order, Filter[ { Field:, Value: }... ]
     SetViewSettings (state, payload) {
-      state.preservedViewSettings = payload
+      function createFilterQuery (Filter) {
+        const paramFilter = { SequentialId: { $gt: 0 } }
+        for (const filteritem of Filter) {
+          const filterField = filteritem.Field
+          const filterValue = filteritem.Value
+
+          if (paramFilter[filterField] === undefined) {
+            paramFilter[filterField] = filterValue
+          } else {
+            if (paramFilter[filterField].$in) {
+              paramFilter[filterField].$in.push(filterValue)
+            } else {
+              paramFilter[filterField] = { $in: [paramFilter[filterField], filterValue] }
+            }
+          }
+        }
+
+        if (paramFilter.DateOfProcedure) {
+          let regexStr = ''
+          if (paramFilter.DateOfProcedure.$in) {
+            regexStr = paramFilter.DateOfProcedure.$in.join('|')
+          } else {
+            regexStr = paramFilter.DateOfProcedure
+          }
+          regexStr = '^(' + regexStr + ')-'
+          paramFilter.DateOfProcedure = { $regex: new RegExp(regexStr) }
+        }
+
+        return paramFilter
+      }
+
+      function preserveSetting (source) {
+        if (!preserve) return
+
+        state.preservedViewSettings.Sort.Item = source.Sort.Item
+        state.preservedViewSettings.Sort.Order = source.Sort.Order
+        state.preservedViewSettings.Filter
+          .splice(
+            0, state.preservedViewSettings.Filter.length,
+            ...source.Filter
+          )
+      }
+
+      const preserve = !payload.noPreserve
+
+      if (payload) {
+        preserveSetting(payload)
+        state.Sort = payload.Sort
+          ? { [payload.Sort.Item]: Number(payload.Sort.Order) }
+          : { [state.defaultViewSettings.Sort.Item]: Number(state.defaultViewSettings.Sort.Order) }
+        state.Filter = createFilterQuery(payload.Filter)
+      } else {
+        preserveSetting(state.defaultViewSettings)
+        state.Sort = { [state.defaultViewSettings.Sort.Item]: Number(state.defaultViewSettings.Sort.Order) }
+        state.Filter = createFilterQuery(state.defaultViewSettings.Filter)
+      }
     },
 
     // VListでのメッセージバナーを表示しないようにする.(再表示は再起動しない限りしない)
@@ -129,25 +185,25 @@ const store = new Vuex.Store({
   actions: {
     // DataStoreの更新. データベースの操作後は必ず実行する.
     //
-    // @Param {Object} Filter: {field: condition,...}, SortOrder: {field: order,...}
+    // @Param {Object} Filter: {field: condition,...}, Sort: {field: order,...}
     ReloadDatastore (context, payload = {}) {
       return new Promise((resolve, reject) => {
         const Filter = { SequentialId: { $gt: 0 } }
-        const SortOrder = {}
+        const Sort = {}
         if (payload.Filter !== undefined) {
           Object.assign(Filter, payload.Filter)
         } else {
           Object.assign(Filter, context.state.Filter)
         }
 
-        if (payload.SortOrder !== undefined) {
-          Object.assign(SortOrder, payload.SortOrder)
+        if (payload.Sort !== undefined) {
+          Object.assign(Sort, payload.Sort)
         } else {
-          Object.assign(SortOrder, context.state.SortOrder)
+          Object.assign(Sort, context.state.Sort)
         }
 
         context.state.DatabaseInstance.find(Filter)
-          .sort(SortOrder)
+          .sort(Sort)
           .exec(
             (error, documents) => {
               if (!error) {

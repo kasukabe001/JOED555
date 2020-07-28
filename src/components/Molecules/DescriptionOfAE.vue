@@ -24,3 +24,15 @@ export default {
   }
 }
 </script>
+
+<style lang="sass">
+// override element's style
+.el-tooltip__popper
+  font-size: 1rem
+  line-height: 1.35rem
+
+div.AE-popper
+  max-width: 30rem
+  div:nth-child(2),:nth-last-child(2)
+    margin-top: 0.5rem
+</style>

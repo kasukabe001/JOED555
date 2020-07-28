@@ -10,7 +10,7 @@
           <ItemOfSection v-if="item.AdditionalProcedure" :item="item.AdditionalProcedure" @click="RemoveItem(index)" />
         </div>
       </draggable>
-      <div class="new-entry-button" @click="AddNewItem()" tabindex="0"></div>
+      <NewEntryButton @click="AddNewItem()" tabindex="0" />
     </div>
   </div>
 </template>
