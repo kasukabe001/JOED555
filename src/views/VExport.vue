@@ -19,10 +19,14 @@
         <el-steps :active="ProcessingStep" process-status="warning" finish-status="success" direction="vertical" space="42px">
           <el-step title="システム設定" />
           <el-step title="要修正データ" />
-          <el-step title="妥当性の検証" />
+          <el-step title="妥当性の検証">
+            <template #description>
+              <el-progress :percentage="ProgressStepThree"></el-progress>
+            </template>
+          </el-step>
           <el-step title="提出用データとして整形">
             <template #description>
-              <el-progress :percentage="ProcessingProgress"></el-progress>
+              <el-progress :percentage="ProgressStepFour"></el-progress>
             </template>
           </el-step>
           <el-step title="チェックサムの計算" />
@@ -46,6 +50,7 @@ import InputSwitchField from '@/components/Molecules/InputSwitchField'
 import SelectYear from '@/components/Molecules/SelectYear'
 import DbItems from '@/modules/DbItemHandler'
 import Popups from '@/modules/Popups'
+import { ValidateCase } from '@/modules/CaseValidater'
 
 export default {
   name: 'ViewExport',
@@ -59,7 +64,8 @@ export default {
       Selector: {},
 
       ProcessingStep: undefined,
-      ProcessingProgress: 0,
+      ProgressStepThree: 0,
+      ProgressStepFour: 0,
       ProcessingAbort: false,
       ReadyForExport: false,
 
@@ -70,7 +76,7 @@ export default {
   methods: {
     StartProcessing () {
       this.ProcessingPreparation = true
-      this.ProcessingProgress = 0
+      this.ProgressStepFour = 0
       this.ProcessingAbort = false
       this.ReadyForExport = false
       this.ShowPreview = false
@@ -80,7 +86,7 @@ export default {
       // transitionの時間だけちょっと待つ（正直無駄）
       new Promise((resolve) => setTimeout(resolve, 500))
         .then(_ => {
-          this.CheckSystem()
+          return this.CheckSystem()
         })
         .then(_ => {
           this.ProcessingStep++
@@ -88,7 +94,7 @@ export default {
         })
         .then(_ => {
           this.ProcessingStep++
-          return new Promise((resolve) => { resolve() })
+          return this.CheckConsistency()
         })
         .then(_ => {
           this.ProcessingStep++
@@ -104,9 +110,9 @@ export default {
             this.ReadyForExport = true
           }
         })
-        .catch((error) => {
-          Popups.alert(error)
-          console.log(error)
+        .catch(error => {
+          this.ReadyForExport = false
+          Popups.alert(error.message)
         })
     },
 
@@ -121,7 +127,7 @@ export default {
       document.body.removeChild(temporaryElementA)
     },
 
-    // 施設名とIDが設定されているかを確認
+    // Step 1 - 施設名とIDが設定されているかを確認
     //
     CheckSystem () {
       return new Promise((resolve) => { resolve() })
@@ -131,7 +137,7 @@ export default {
             resolve(InstitutionID)
           })
         })
-        .then((InstitutionID) => {
+        .then(InstitutionID => {
           return new Promise((resolve, reject) => {
             if (InstitutionID === '') { reject(new Error('施設情報が未設定です.')) }
             resolve(InstitutionID)
@@ -139,7 +145,7 @@ export default {
         })
     },
 
-    // インポートデータがすべて確認されているかを確認
+    // Step 2 - インポートデータがすべて確認されているかを確認
     //
     // インポートデータ( Imported )で特になんの問題も無くインポートできたもの以外には Notification がある
     CheckImported () {
@@ -166,16 +172,16 @@ export default {
           })
         })
     },
-    // データの妥当性検証
+    // Step 3 - データの妥当性検証
     //
     // 基本的に入力時に検証されているので大丈夫だと思うが：
     //  必須項目の有無
     //  項目の重複(ditto含む)
     CheckConsistency () {
       const DatabaseInstance = this.$store.state.DatabaseInstance
-      this.ProcessingProgress = 0
+      this.ProgressStepThree = 0
 
-      return new Promise((resolve) => { resolve() })
+      return new Promise((resolve, reject) => resolve())
         .then(_ => {
           return new Promise((resolve, reject) => {
             const selector = {
@@ -188,42 +194,56 @@ export default {
 
             DatabaseInstance.find(selector, (error, documents) => {
               if (error) reject(error)
-              resolve(document)
+              resolve(documents)
             })
           })
         })
         .then(documents => {
           const length = documents.length
-          const IdOfErrorDocuments = []
+          const ErrorsOfDocument = []
 
           return new Promise((resolve, reject) => {
-            for (const index in document) {
-              this.ProcessingProgress = parseInt(index * 100.0 / length)
-
-              const document = documents[index]
-              const Year = document.DateOfProcedure.substring(0, 4)
-
-              // 必須項目の確認
-              const validateBasicInformations =
-                document.Age > 0 &&
-                !!document.DateOfProcedure &&
-                !!document.ProcedureTime
-              if (!validateBasicInformations) IdOfErrorDocuments.push(document.SequentialId)
-
-              // 診断の確認
-              for (const item of document.Diagnoses) {
-                if (item.DateOfProcedure === Year) {
-                  // nop now
+            const ProgressStep = parseInt(100.0 / (length || 1))
+            Promise.all(
+              documents.map(document => new Promise(resolve => {
+                ValidateCase(document)
+                  .then(_ => {
+                    this.ProgressStepThree += ProgressStep
+                    resolve()
+                  })
+                  .catch(error => {
+                    ErrorsOfDocument.push({
+                      uid: document.SequentialId,
+                      message: error
+                    })
+                    resolve()
+                  })
+              })
+              )
+            )
+              .then(_ => {
+                if (ErrorsOfDocument.length > 0) {
+                  console.log(ErrorsOfDocument)
+                  reject(
+                    new Error(
+                      'データ検証で' +
+                      ErrorsOfDocument.length +
+                      '件のエラーが確認されました.\n該当するデータの修正を御願いします.'
+                    )
+                  )
+                } else {
+                  resolve()
                 }
-              }
-            }
+              })
           })
         })
     },
+    // Step 4 - データの整形
+    //
     CreateExportData () {
       const DatabaseInstance = this.$store.state.DatabaseInstance
 
-      this.ProcessingProgress = 0
+      this.ProgressStepFour = 0
 
       return new Promise((resolve) => { resolve() })
         .then(_ => {
@@ -251,7 +271,7 @@ export default {
           return new Promise((resolve, reject) => {
             for (const index in documents) {
               const item = documents[index]
-              this.ProcessingProgress = parseInt(index * 100.0 / documents.length)
+              this.ProgressStepFour = parseInt(index * 100.0 / documents.length)
 
               temporaryExportItems.push(
                 DbItems.exportCase(item, InstituteId,
@@ -261,11 +281,13 @@ export default {
                 )
               )
             }
-            this.ProcessingProgress = 100
+            this.ProgressStepFour = 100
             resolve(temporaryExportItems)
           })
         })
     },
+    // Step 5 - データヘッダの作成
+    //
     CreateHeader (exportItem) {
       return new Promise((resolve) => {
         const length = exportItem.length

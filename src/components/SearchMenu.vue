@@ -9,7 +9,7 @@
             <option value="Id">患者ID</option>
             <option value="Name">患者名</option>
             <option value="Procedures">手術診断</option>
-            <option value="Diagnoses">手術診断</option>
+            <option value="Diagnoses">実施手術</option>
             <option value="UID">問い合わせ番号</option>
           </select>
         </div>
@@ -146,8 +146,8 @@ const SearchSetting = {
     regexp: false,
     multiple: true,
     createquery: (query) => {
-      let queries = query.split(/[\s,，]+/)
       const queryRegex = new RegExp(/^20[0-9]{2}-(0[1-9]|[23][0-9]|4[0-7])\d{3}-([0-9]+)$/g)
+      let queries = query.split(/[\s,，]+/)
 
       queries = queries
         .filter(query => query.match(queryRegex) !== null)
@@ -189,13 +189,17 @@ export default {
     performQuery () {
       if (this.Field && this.SearchString && SearchSetting[this.Field]) {
         const query = SearchSetting[this.Field].createquery(this.SearchString, this.UseRegexp)
-        this.$emit('commit', {
-          noPreserve: true,
-          Filter: [{
-            Field: Object.keys(query)[0],
-            Value: query[Object.keys(query)[0]]
-          }]
-        })
+        if (query) {
+          this.$emit('commit', {
+            noPreserve: true,
+            Filter: [{
+              Field: Object.keys(query)[0],
+              Value: query[Object.keys(query)[0]]
+            }]
+          })
+        } else {
+          console.log('creating query failed.')
+        }
       }
     },
     cancelQuery () {

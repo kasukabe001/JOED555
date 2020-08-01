@@ -117,7 +117,7 @@ const store = new Vuex.Store({
     // @param {Object} Sort.Item, Sort.Order, Filter[ { Field:, Value: }... ]
     SetViewSettings (state, payload) {
       function createFilterQuery (Filter) {
-        const paramFilter = { SequentialId: { $gt: 0 } }
+        const paramFilter = {}
         for (const filteritem of Filter) {
           const filterField = filteritem.Field
           const filterValue = filteritem.Value
@@ -131,6 +131,10 @@ const store = new Vuex.Store({
               paramFilter[filterField] = { $in: [paramFilter[filterField], filterValue] }
             }
           }
+        }
+
+        if (!paramFilter.SequentialId) {
+          paramFilter.SequentialId = { $gt: 0 }
         }
 
         if (paramFilter.DateOfProcedure) {

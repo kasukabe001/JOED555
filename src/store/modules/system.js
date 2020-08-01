@@ -42,6 +42,9 @@ export default {
     },
     ShowWelcomeMessage (state) {
       return state.ShowWelcomeMessage
+    },
+    DefaultViewSetting (state) {
+      return state.DefaultViewSetting
     }
   },
   mutations: {
