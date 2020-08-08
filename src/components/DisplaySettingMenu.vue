@@ -47,7 +47,7 @@
         <div>情報</div>
         <div>
           <label><input type="checkbox" v-model="FilterItems" :value="{ Field: 'PresentAE', Value: true }">合併症あり</label>
-          <label><input type="checkbox" v-model="FilterItems" :value="{ Field: 'Notification', Value: true }">エラーあり</label>
+          <label><input type="checkbox" v-model="FilterItems" :value="{ Field: 'Notification', Value: { $exists: true } }">エラーあり</label>
         </div>
       </div>
     </div>

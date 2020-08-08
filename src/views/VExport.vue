@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div style="width: 900px;">
     <div class="title-section">データの出力</div>
     <div class="label"><span>出力する年次</span></div>
     <div class="field">
@@ -18,7 +18,7 @@
       <div class="export-progression" v-if="ProcessingStep !== undefined">
         <el-steps :active="ProcessingStep" process-status="warning" finish-status="success" direction="vertical" space="42px">
           <el-step title="システム設定" />
-          <el-step title="要修正データ" />
+          <el-step title="要修正データの修正を確認" />
           <el-step title="妥当性の検証">
             <template #description>
               <el-progress :percentage="ProgressStepThree"></el-progress>
@@ -178,63 +178,108 @@ export default {
     //  必須項目の有無
     //  項目の重複(ditto含む)
     CheckConsistency () {
+      // マーキングを含む作業にはSequentialIdではなく、indexされている_idを使用する.
+      function CheckConsistencies (documentids, numberOfpool = 10) {
+        const idPool = Object.assign([], documentids)
+        const sources = idPool.splice(0, numberOfpool)
+
+        const ErrorsOfDocument = []
+
+        const query = { _id: { $in: [...sources] } }
+        console.log('Query is ' + JSON.stringify(query))
+
+        return new Promise((resolve, reject) => {
+          DatabaseInstance
+            .find(query)
+            .exec((error, querydoc) => {
+              if (error) reject(new Error('データベースエラーです.'))
+              resolve(querydoc)
+            })
+        }).then(documents => {
+          return Promise.all(
+            documents.map(
+              item => new Promise(resolve => {
+                ValidateCase(item)
+                  .catch(error =>
+                    ErrorsOfDocument.push({
+                      _id: item._id,
+                      message: error
+                    })
+                  )
+                  .then(_ =>
+                    resolve()
+                  )
+              })
+            )
+          )
+        }).then(_ => {
+          if (idPool.length > 0) {
+            return CheckConsistencies(idPool, numberOfpool)
+              .then(SecondDocuments => {
+                return new Promise(resolve => resolve([...ErrorsOfDocument, ...SecondDocuments]))
+              })
+          }
+          return new Promise(resolve => resolve(ErrorsOfDocument))
+        }).then(DocumentList => {
+          return new Promise(resolve => resolve(DocumentList))
+        })
+      }
+
+      function SetNotificationField (documents) {
+        const details = documents.pop()
+        if (details) {
+          DatabaseInstance.update(
+            { _id: details._id },
+            { $set: { Notification: details.message } },
+            {},
+            _ => SetNotificationField(documents)
+          )
+        }
+      }
+
       const DatabaseInstance = this.$store.state.DatabaseInstance
+      const selector = {
+        SequentialId: { $gt: 0 }
+      }
+      // let ProgressStep = 1
       this.ProgressStepThree = 0
 
       return new Promise((resolve, reject) => resolve())
         .then(_ => {
           return new Promise((resolve, reject) => {
-            const selector = {
-              SequentialId: { $gt: 0 }
-            }
             if (this.ExportYear !== '') {
               const reg = new RegExp('^' + this.ExportYear + '-')
               selector.DateOfProcedure = { $regex: reg }
             }
 
-            DatabaseInstance.find(selector, (error, documents) => {
-              if (error) reject(error)
-              resolve(documents)
-            })
+            DatabaseInstance
+              .find(selector)
+              .projection({ _id: 1 })
+              .exec((error, documents) => {
+                if (error) reject(error)
+                if (documents.length > 0) resolve(documents.map(item => item._id))
+                reject(new Error('エクスポートの対象がありません.'))
+              })
           })
         })
-        .then(documents => {
-          const length = documents.length
-          const ErrorsOfDocument = []
-
+        .then(documentids => {
+          return CheckConsistencies(documentids)
+        })
+        .then(ErrorsOfDocument => {
           return new Promise((resolve, reject) => {
-            const ProgressStep = parseInt(100.0 / (length || 1))
-            Promise.all(
-              documents.map(document => new Promise(resolve => {
-                ValidateCase(document)
-                  .then(_ => {
-                    this.ProgressStepThree += ProgressStep
-                    resolve()
-                  })
-                  .catch(error => {
-                    ErrorsOfDocument.push({
-                      uid: document.SequentialId,
-                      message: error
-                    })
-                    resolve()
-                  })
-              })
+            const errorcount = ErrorsOfDocument.length
+            if (errorcount > 0) {
+              SetNotificationField(ErrorsOfDocument)
+              reject(
+                new Error(
+                  'データ検証で' +
+                  errorcount +
+                  '件のエラーが確認されました.\n該当するデータの修正を御願いします.'
+                )
               )
-            )
-              .then(_ => {
-                if (ErrorsOfDocument.length > 0) {
-                  console.log(ErrorsOfDocument)
-                  reject(
-                    new Error(
-                      'データ検証で' +
-                      ErrorsOfDocument.length +
-                      '件のエラーが確認されました.\n該当するデータの修正を御願いします.'
-                    )
-                  )
-                } else {
-                  resolve()
-                }
-              })
+            } else {
+              resolve()
+            }
           })
         })
     },

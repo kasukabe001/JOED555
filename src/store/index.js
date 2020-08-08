@@ -163,7 +163,7 @@ const store = new Vuex.Store({
           )
       }
 
-      const preserve = !payload.noPreserve
+      const preserve = payload && !payload.noPreserve
 
       if (payload) {
         preserveSetting(payload)

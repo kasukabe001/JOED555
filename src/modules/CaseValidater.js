@@ -1,12 +1,13 @@
 import DaignosisTree from '@/modules/DiagnosisItemList'
 import ProcedureTree from '@/modules/ProcedureItemList'
-// import { resolve, reject } from 'core-js/fn/promise'
 
 // 2020年時点の日産腫瘍登録患者No.表記
 const JSOGboardCaseNoFormat = /^(CC|EM|US|UAS|OV|VU|TS)20\d{2}-\d+$/ig
+
 // NCDの症例識別コード
 const NCDIdFormat = /\d{18}-\d{2}-\d{2}-\d{2}/g
-// カテゴリチェックのための正規化テーブル
+
+// カテゴリチェック(診断のカテゴリに集約する)のテーブル
 export const CategoryTranslation = {
   腹腔鏡: '腹腔鏡',
   腹腔鏡悪性: '腹腔鏡悪性',

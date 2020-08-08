@@ -44,7 +44,7 @@
 
       <div class="edit-controls">
         <div class="edit-controls-left">
-          <el-button type="warning" icon="el-icon-warning" v-if="CaseData.Notification">入力内容の確認が必要です.</el-button>
+          <el-button type="warning" icon="el-icon-warning" @click="ShowNotification" v-if="CaseData.Notification">入力内容の確認が必要です.</el-button>
         </div>
         <div class="edit-controls-right">
           <div>
@@ -196,6 +196,10 @@ export default {
       } else {
         this.$router.push({ name: 'list', hash: ('#case-' + hashuid) })
       }
+    },
+
+    ShowNotification () {
+      Popups.alert(this.CaseData.Notification)
     },
 
     EditListItem (target, index, value) {
