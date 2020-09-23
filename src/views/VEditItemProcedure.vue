@@ -1,48 +1,18 @@
 <template>
   <div class="edititem-overlay">
     <div class="edititem-overlay-content">
-      <div class="flex-content">
-        <div class="w20 selectionbox">
-          <div class="subtitle-section">カテゴリ</div>
-          <select v-model="Category"
-            size="8"
-            @change="CategoryIsChanged()">
-            <option v-for="(item,key,index) in Categories"
-              :key="index"
-              :value="item">
-              {{item}}
-            </option>
-          </select>
-        </div>
-        <div class="w20 selectionbox">
-          <div class="subtitle-section">対象臓器</div>
-          <select v-model="TargetOrgan"
-            size="8"
-            @change="SetCandidateItemsBySelection()">
-            <option v-if="TargetOrgans.length===0" value=""/>
-            <option v-for="(item,key,index) in TargetOrgans"
-              :key="index"
-              :value="item">
-              {{item}}
-            </option>
-          </select>
-        </div>
-        <div class="w60 selectionbox">
-          <div class="subtitle-section">候補術式</div>
-          <select
-            size="8"
-            v-model="SelectedItem"
-            @change="OnCandidateSelected()"
-            @dblclick="CommitChanges()">
-            <option v-if="CandidateItems.length===0" value=""/>
-            <option v-for="(item,key,index) in CandidateItems"
-              :key="index"
-              :value="item">
-              {{item}}
-            </option>
-          </select>
-        </div>
-      </div>
+      <ThreePaneSelections
+        Pane3Title="候補術式"
+        :Pane1.sync="Category" :Pane1Items="Categories"
+        @Pane1Change="CategoryIsChanged()"
+        :Pane2.sync="TargetOrgan" :Pane2Items="TargetOrgans"
+        @Pane2Change="SetCandidateItemsBySelection()"
+        :Pane3.sync="SelectedItem" :Pane3Items="CandidateItems"
+        @Pane3Change="OnCandidateSelected()"
+        @Pane3DblClick="CommitChanges()"
+      >
+      </ThreePaneSelections>
+
       <!-- 追加術式ペイン -->
       <div class="flex-content" v-if="Description.AdditionalProcedureTitle">
         <div class="w30"></div>
@@ -56,6 +26,7 @@
         </div>
         <div class="w10"></div>
       </div>
+
       <!-- 追加情報ペイン -->
       <div class="flex-content" v-if="Description.Title">
         <div class="w30"></div>
@@ -118,6 +89,7 @@ import EditItemMixins from '@/mixins/EditItemMixins'
 import ProcedureTree from '@/modules/ProcedureItemList'
 import { getMatchesInProcedures } from '@/modules/CloseMatches'
 import Popups from '@/modules/Popups.js'
+import ThreePaneSelections from '@/components/Molecules/3PaneSelections'
 
 const ProceduresTree = new ProcedureTree()
 
@@ -126,6 +98,7 @@ export default {
   mixins: [
     EditItemMixins
   ],
+  components: { ThreePaneSelections },
   props: {
     disableCancel: {
       type: Boolean,

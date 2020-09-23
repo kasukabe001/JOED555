@@ -28,7 +28,8 @@ export default {
         { name: 'Datepicker', href: 'https://github.com/charliekassel/vuejs-datepicker', license: 'MIT' },
         { name: 'cross-platform-yu-gothic', href: 'https://github.com/rxon/cross-platform-yu-gothic', license: 'MIT' },
         { name: 'js-xxhash', href: 'https://github.com/pierrec/js-xxhash', license: 'MIT' },
-        { name: 'Difflib.js', href: 'https://github.com/qiao/difflib.js', license: 'PSF' }
+        { name: 'Difflib.js', href: 'https://github.com/qiao/difflib.js', license: 'PSF' },
+        { name: 'encoding.js', href: 'https://github.com/polygonplanet/encoding.js', license: 'MIT' }
       ]
     })
   }

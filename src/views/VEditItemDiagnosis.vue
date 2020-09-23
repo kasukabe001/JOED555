@@ -1,46 +1,17 @@
 <template>
   <div class="edititem-overlay">
     <div class="edititem-overlay-content">
-      <div class="flex-content">
-        <div class="w20 selectionbox">
-          <div class="subtitle-section">カテゴリ</div>
-          <select v-model="Category"
-            size="8"
-            @change="CategoryIsChanged()">
-            <option v-for="(item,key,index) in Categories"
-              :key="index"
-              :value="item">
-              {{item}}
-            </option>
-          </select>
-        </div>
-        <div class="w20 selectionbox">
-          <div class="subtitle-section">対象臓器</div>
-          <select v-model="TargetOrgan"
-            size="8"
-            @change="SetCandidateItemsBySelection()">
-            <option v-if="TargetOrgans.length === 0" value=""/>
-            <option v-for="(item,key,index) in TargetOrgans"
-              :key="index"
-              :value="item">
-              {{item}}
-            </option>
-          </select>
-        </div>
-        <div class="w60 selectionbox">
-          <div class="subtitle-section">候補病名</div>
-          <select v-model="SelectedItem"
-            size="8"
-            @dblclick="CommitChanges()">
-            <option v-if="CandidateItems.length === 0" value=""/>
-            <option v-for="(item,key,index) in CandidateItems"
-              :key="index"
-              :value="item">
-              {{item}}
-            </option>
-          </select>
-        </div>
-      </div>
+      <ThreePaneSelections
+        Pane3Title="候補病名"
+        :Pane1.sync="Category" :Pane1Items="Categories"
+        @Pane1Change="CategoryIsChanged()"
+        :Pane2.sync="TargetOrgan" :Pane2Items="TargetOrgans"
+        @Pane2Change="SetCandidateItemsBySelection()"
+        :Pane3.sync="SelectedItem" :Pane3Items="CandidateItems"
+        @Pane3Change="OnCandidateSelected()"
+        @Pane3DblClick="CommitChanges()"
+      >
+      </ThreePaneSelections>
 
       <div class="flex-content inputbox">
         <div class="w20"></div>
@@ -77,6 +48,7 @@ import EditItemMixins from '@/mixins/EditItemMixins'
 import DiagnosisTree from '@/modules/DiagnosisItemList'
 import { getMatchesInDiagnoses } from '@/modules/CloseMatches'
 import Popups from '@/modules/Popups.js'
+import ThreePaneSelections from '@/components/Molecules/3PaneSelections'
 
 const DiagnosesTree = new DiagnosisTree()
 
@@ -89,6 +61,7 @@ export default {
   mixins: [
     EditItemMixins
   ],
+  components: { ThreePaneSelections },
   created () {
     if (this.ItemValue.UserTyped && this.ItemValue.UserTyped === true) {
       this.Category = this.ItemValue.Chain[0]
