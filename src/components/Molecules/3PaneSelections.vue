@@ -135,6 +135,12 @@ export default {
     },
     Pane3DblClick (value) {
       this.$emit('Pane3DblClick', value)
+    },
+    ClearPane2 () {
+      this.$refs.Pane3.Clear()
+    },
+    ClearPane3 () {
+      this.$refs.Pane3.Clear()
     }
   }
 }

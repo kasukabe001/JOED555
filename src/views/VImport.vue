@@ -95,7 +95,7 @@ export default {
     async CommitImported () {
       for (const newdocument of this.QueryDocuments) {
         try {
-          await this.$store.dispatch('UpsertItemInDatastore', newdocument)
+          await this.$store.dispatch('UpsertItem', newdocument)
         } catch (error) {
           Popups.alert(error)
         }

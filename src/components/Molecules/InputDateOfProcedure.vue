@@ -21,7 +21,9 @@ export default {
   name: 'InputDateOfProcedure',
   props: {
     value: {},
-    required: { default: false }
+    required: {
+      default: false
+    }
   },
   components: {
     Datepicker

@@ -47,6 +47,11 @@ export default class DiagnosisTree extends SelectionTree {
             Text: '子宮体部腫瘍(APAM、STUMP等)',
             VaildFrom: '2020'
           },
+          // 2020 新規
+          {
+            Text: '絨毛性疾患',
+            VaildFrom: '2020'
+          },
           // 2020 表記変更 異所性妊娠(子宮外妊娠) -> 異所性妊娠
           {
             Text: '異所性妊娠(子宮外妊娠)',
@@ -125,6 +130,11 @@ export default class DiagnosisTree extends SelectionTree {
             Text: '子宮内膜症(子宮内膜症性嚢胞含む)',
             VaildFrom: '2020'
           },
+          // 2020 新規
+          {
+            Text: '絨毛性疾患',
+            VaildFrom: '2020'
+          },
           // 2020 表記変更 異所性妊娠(子宮外妊娠) -> 異所性妊娠
           {
             Text: '異所性妊娠(子宮外妊娠)',
@@ -185,6 +195,11 @@ export default class DiagnosisTree extends SelectionTree {
           },
           // 2020 新規
           {
+            Text: '絨毛性疾患',
+            VaildFrom: '2020'
+          },
+          // 2020 新規
+          {
             Text: '婦人科以外の悪性腫瘍',
             VaildFrom: '2020'
           },
@@ -241,6 +256,21 @@ export default class DiagnosisTree extends SelectionTree {
           {
             Text: '上記以外の悪性腫瘍',
             VaildTo: '2019'
+          },
+          // 2020 新規
+          {
+            Text: '腟癌',
+            VaildFrom: '2020'
+          },
+          // 2020 新規
+          {
+            Text: '外陰癌',
+            VaildFrom: '2020'
+          },
+          // 2020 新規
+          {
+            Text: '絨毛性疾患',
+            VaildFrom: '2020'
           },
           // 2020 新規
           {

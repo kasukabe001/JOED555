@@ -18,7 +18,10 @@
         <div class="w20 subtitle-section">
           <div tabindex="0" @click="ToggleEditsection()">
             <span>診断入力</span>
-            <i class="el-icon-d-arrow-right" v-show="!ExpandEditsection"/>
+            <span style="padding-left: 1rem;">
+              <i class="el-icon-d-arrow-right" v-show="!ExpandEditsection"/>
+              <i class="el-icon-d-arrow-left" v-show="ExpandEditsection"/>
+            </span>
           </div>
         </div>
         <div class="w40" v-show="ExpandEditsection">
@@ -70,46 +73,23 @@ export default {
       this.$nextTick()
     }
   },
-  watch: {
-    SelectedItem: {
-      handler: function (newvalue) {
-        if (this.IsItemEdited) {
-          if (newvalue !== '') {
-            this.UserInputText = this.EditableItem
-          }
-        }
-        this.EditableItem = newvalue
-      }
-    }
-  },
   computed: {
     Categories () {
       return DiagnosesTree.Categories()
     },
     TargetOrgans () {
       return DiagnosesTree.Targets(this.Category)
-    },
-    UserEditingAllowed () {
-      return !!this.Category && !this.SelectedItem
     }
   },
   methods: {
-    CategoryIsChanged () {
-      this.TargetOrgan = ''
-      if (this.SelectedItem !== '') {
-        this.EditableItem = ''
+    OnCandidateSelected () {
+      const newValue = this.SelectedItem
+      this.EditableItem = newValue
+
+      if (!this.TargetOrgan) {
+        const searchByName = DiagnosesTree.findItemByName(newValue, this.year)
+        this.TargetOrgan = searchByName.Chain[1]
       }
-
-      this.SelectedItem = ''
-      this.CandidateItems.splice(0)
-
-      this.$nextTick().then(_ => {
-        if (this.TargetOrgans.length === 1) {
-          this.TargetOrgan = this.TargetOrgans[0]
-          this.SetCandidateItemsBySelection()
-        }
-        this.$nextTick()
-      })
     },
 
     SetCandidateItemsBySelection () {

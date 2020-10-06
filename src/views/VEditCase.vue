@@ -263,7 +263,7 @@ export default {
     },
     RemoveCase () {
       if (this.uid > 0 && Popups.confirm('この症例を削除します.よろしいですか?')) {
-        this.$store.dispatch('RemoveItemFromDatastore', { SequentialId: this.uid })
+        this.$store.dispatch('RemoveItem', { SequentialId: this.uid })
         this.GoBackToList()
       }
     },
@@ -367,7 +367,7 @@ export default {
             if (errors.filter(item => item).length > 0) {
               reject(new Error(errors.filter(item => item).join('\n')))
             } else {
-              this.$store.dispatch('UpsertItemInDatastore', newDocument)
+              this.$store.dispatch('UpsertItem', newDocument)
                 .then(_ => resolve())
                 .catch(dberror => reject(dberror))
             }

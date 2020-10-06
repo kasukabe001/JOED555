@@ -1,6 +1,6 @@
 <template>
   <div>
-    <DrawerButton div-class="open-drawer" tab-index="0" @click="OpenDrawer" />
+    <DrawerButton div-class="open-drawer" tab-index="0" @click="OpenDrawer" accesskey="D"/>
     <el-drawer
       title="MenuDrawer"
       size="26rem"
@@ -10,9 +10,9 @@
       :visible.sync="showMenuDrawer">
       <Drawer @close="CloseDrawer"></Drawer>
     </el-drawer>
-    <NewEntryButton div-class="list-new-entry" tab-index="0" @click="CreateNewEntry()"/>
+    <NewEntryButton div-class="list-new-entry" tab-index="0" @click="CreateNewEntry()" accesskey="N"/>
 
-    <div class="itemlist" @keyup.ctrl.65="CreateNewEntry()">
+    <div class="itemlist">
       <Caseitem v-for="uid in Uids" :key="uid" :uid="uid" />
     </div>
 

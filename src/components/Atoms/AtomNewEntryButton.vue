@@ -1,5 +1,5 @@
 <template>
-    <div :class="DivClass" class="new-entry-button" :tabindex="TabIndex" @click="onClick">
+    <div :class="DivClass" class="new-entry-button" :tabindex="tabindex" @click="onClick" :accesskey="accesskey">
     </div>
 </template>
 
@@ -10,8 +10,11 @@ export default {
     DivClass: {
       type: String
     },
-    TabIndex: {
-      type: String, Number
+    tabindex: {
+      type: [String, Number]
+    },
+    accesskey: {
+      type: String
     }
   },
   methods: {

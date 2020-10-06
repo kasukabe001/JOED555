@@ -59,7 +59,10 @@
         <div class="w20 subtitle-section">
           <div tabindex="0" @click="ToggleEditsection()">
             <span>手術入力</span>
-            <i class="el-icon-d-arrow-right" v-show="!ExpandEditsection"/>
+            <span style="padding-left: 1rem;">
+              <i class="el-icon-d-arrow-right" v-show="!ExpandEditsection"/>
+              <i class="el-icon-d-arrow-left" v-show="ExpandEditsection"/>
+            </span>
           </div>
         </div>
         <div class="w40" v-show="ExpandEditsection">
@@ -114,6 +117,15 @@ export default {
         Options: [],
         Multi: false,
         Value: []
+      },
+      AdditionalProcedure: {
+        Title: '',
+        Description: {
+          Title: '',
+          Options: [],
+          Multi: false,
+          Value: []
+        }
       }
     })
   },
@@ -132,11 +144,6 @@ export default {
     TargetOrgans () {
       return ProceduresTree.Targets(this.Category)
     },
-
-    UserEditingAllowed () {
-      return !!this.Category && !this.SelectedItem
-    },
-
     DescriptionValue: {
       set (newvalue) {
         if (typeof newvalue === 'string') {
@@ -154,24 +161,6 @@ export default {
     }
   },
   methods: {
-    CategoryIsChanged () {
-      this.TargetOrgan = ''
-      if (this.SelectedItem !== '') {
-        this.EditableItem = ''
-      }
-
-      this.SelectedItem = ''
-      this.CandidateItems.splice(0)
-
-      this.$nextTick().then(_ => {
-        if (this.TargetOrgans.length === 1) {
-          this.TargetOrgan = this.TargetOrgans[0]
-          this.SetCandidateItemsBySelection()
-        }
-        this.$nextTick()
-      })
-    },
-
     SetCandidateItemsBySelection () {
       this.CandidateItems = ProceduresTree.Candidates(this.Category, this.TargetOrgan, this.year)
       this.SelectedItem = ''
@@ -190,10 +179,6 @@ export default {
         this.Description.Title = ''
         this.$nextTick()
       }
-    },
-
-    spliceMarker (str) {
-      return str[str.length - 1] !== '$' ? str : str.substr(0, str.length - 1)
     },
 
     OnCandidateSelected () {

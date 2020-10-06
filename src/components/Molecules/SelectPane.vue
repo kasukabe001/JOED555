@@ -1,7 +1,8 @@
 <template>
   <div>
     <div class="subtitle-section">{{title}}</div>
-    <select ref="SelectPane" :size="lines"
+    <select tabindex="0"
+      ref="SelectPane" :size="lines"
       v-model="PaneValue"
       @change="Change()"
       @dblckick="DblClick()">

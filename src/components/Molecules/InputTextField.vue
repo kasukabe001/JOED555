@@ -7,7 +7,8 @@
         :placeholder="placeholder"
         :class="RequiredClass"
         @keyup.13="$emit('enter')"
-        :disabled="disabled"/>
+        :disabled="disabled"
+        :accesskey="accesskey"/>
     </div>
 </div>
 </template>
@@ -31,6 +32,9 @@ export default {
     disabled: {
       type: Boolean,
       default: false
+    },
+    accesskey: {
+      type: String
     }
   },
   computed: {
