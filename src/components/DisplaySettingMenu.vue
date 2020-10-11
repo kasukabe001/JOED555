@@ -4,12 +4,12 @@
     <div class="menu-item-content">
       <div>
         <select v-model="Sort.Item">
-          <option value="SequentialId">登録順</option>
+          <option value="DocumentId">登録順</option>
           <option value="DateOfProcedure">手術日</option>
           <option value="ProcedureTime">手術時間</option>
           <option value="TypeOfProcedure">カテゴリ</option>
           <option value="Age">年齢</option>
-          <option value="InstitutionalPatientId">施設の患者ID</option>
+          <option value="PatientId">施設の患者ID</option>
         </select>
       </div>
 
@@ -67,7 +67,7 @@ export default {
     return ({
       Categories: Object.keys(CategoryTranslation),
       Sort: {
-        Item: 'SequentialId',
+        Item: 'DocumentId',
         Order: -1
       },
       FilterItems: [],

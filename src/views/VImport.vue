@@ -43,7 +43,7 @@
 import InputFile from '@/components/Molecules/InputFile'
 // import ValidateCase from '@/modules/CaseValidater'
 import { phraseTitledCSV, CreateDocument } from '@/modules/CSVimporter'
-import Popups from '@/modules/Popups'
+import Popups from '@/modules/serve/Popups'
 
 export default {
   name: 'ViewImport',

@@ -10,7 +10,7 @@ export default {
     DefaultViewSetting: {
       Filter: [],
       Sort: {
-        field: 'SequentialId',
+        field: 'DocumentId',
         order: -1
       }
     },

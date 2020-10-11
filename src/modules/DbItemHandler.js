@@ -114,14 +114,14 @@ export default class DbItems {
     }
 
     if (params.exportAllfields) {
-      propsToExport.splice(3, 0, 'InstitutionalPatientId', 'Name')
+      propsToExport.splice(3, 0, 'PatientId', 'Name')
       params.spliceDateOfProcedure = false
     }
 
     temporaryItem.UniqueID = [
       InstituteId,
       item.DateOfProcedure.substring(0, 4),
-      item.SequentialId
+      item.DocumentId
     ].join('-')
 
     for (const prop of propsToExport) {

@@ -3,17 +3,17 @@
     <div class="app-dialog w800p">
       <div class="edit-top">
         <div class="edit-top-left">
-          <InputDateOfProcedure v-model="CaseData.DateOfProcedure" :required="true"/>
-          <InputTextField title="患者ID" :required="true" v-model="CaseData.InstitutionalPatientId" placeholder="施設の患者ID"/>
-          <InputTextField title="患者名" v-model="CaseData.Name" />
-          <InputProcedureTime v-model="CaseData.ProcedureTime" />
+          <InputDateOfProcedure v-model="CaseData.DateOfProcedure" :required="true" :disabled="Processing"/>
+          <InputTextField title="患者ID" :required="true" v-model="CaseData.PatientId" placeholder="施設の患者ID" :disabled="Processing"/>
+          <InputTextField title="患者名" v-model="CaseData.Name" :disabled="Processing"/>
+          <InputProcedureTime v-model="CaseData.ProcedureTime" :disabled="Processing"/>
         </div>
         <div class="edit-top-right">
-          <InputTextField title="腫瘍登録番号" v-model="CaseData.JSOGId" placeholder="腫瘍登録患者No." />
-          <InputTextField title="NCD症例識別コード" v-model="CaseData.NCDId" placeholder="NCD症例識別コード" />
+          <InputTextField title="腫瘍登録番号" v-model="CaseData.JSOGId" placeholder="腫瘍登録患者No." :disabled="Processing"/>
+          <InputTextField title="NCD症例識別コード" v-model="CaseData.NCDId" placeholder="NCD症例識別コード" :disabled="Processing"/>
           <div> <!-- spacer -->
           </div>
-          <InputNumberField title="年齢" :required="true" v-model="CaseData.Age" :min="1" :max="120" />
+          <InputNumberField title="年齢" :required="true" v-model="CaseData.Age" :min="1" :max="120" :disabled="Processing"/>
         </div>
       </div>
 
@@ -22,6 +22,7 @@
         @addnewitem="OpenEditView('diagnosis')"
         @edititem="OpenEditView('diagnosis', $event)"
         @removeitem="RemoveListItem('Diagnoses', $event)"
+        :disabled="Processing"
       />
 
       <SectionProcedures
@@ -29,6 +30,7 @@
         @addnewitem="OpenEditView('procedure')"
         @edititem="OpenEditView('procedure', $event)"
         @removeitem="RemoveListItem('Procedures', $event)"
+        :disabled="Processing"
       />
 
       <SectionAEs
@@ -36,32 +38,33 @@
         :optionValue.sync="isNoAEs"
         @addnewitem="OpenEditView('AE')"
         @removeitem="RemoveListItem('AEs', $event)"
+        :disabled="Processing"
       />
 
       <!-- Controles -->
-      <el-button icon="el-icon-caret-left" size="medium" circle id="MovePrev" v-if="IsEditingExistingItem" :disabled="!Nexts[0]" @click="CancelEditing(-1)"></el-button>
-      <el-button icon="el-icon-caret-right" size="medium" circle id="MoveNext" v-if="IsEditingExistingItem" :disabled="!Nexts[1]" @click="CancelEditing(+1)"></el-button>
+      <el-button icon="el-icon-caret-left" size="medium" circle id="MovePrev" v-if="IsEditingExistingItem" :disabled="Processing || !Nexts[0]" @click="CancelEditing(-1)"></el-button>
+      <el-button icon="el-icon-caret-right" size="medium" circle id="MoveNext" v-if="IsEditingExistingItem" :disabled="Processing || !Nexts[1]" @click="CancelEditing(+1)"></el-button>
 
       <div class="edit-controls">
         <div class="edit-controls-left">
-          <el-button type="warning" icon="el-icon-warning" @click="ShowNotification" v-if="CaseData.Notification">入力内容の確認が必要です.</el-button>
+          <el-button type="warning" icon="el-icon-warning" @click="ShowNotification" v-if="CaseData.Notification" :disabled="Processing">入力内容の確認が必要です.</el-button>
         </div>
         <div class="edit-controls-right">
           <div>
-            <el-button type="primary" icon="el-icon-arrow-left" @click="CancelEditing()">戻る</el-button>
+            <el-button type="primary" icon="el-icon-arrow-left" @click="CancelEditing()" :disabled="Processing">戻る</el-button>
           </div>
           <div>
-            <el-dropdown split-button type="primary" @click="CommitCase()" @command="CommitCaseAndGo">
+            <el-dropdown split-button type="primary" @click="CommitCase()" @command="CommitCaseAndGo" :disabled="Processing">
               編集内容を保存
               <el-dropdown-menu slot="dropdown">
-                <el-dropdown-item command="prev" v-if="IsEditingExistingItem && Nexts[0]">保存して前へ</el-dropdown-item>
-                <el-dropdown-item command="next" v-if="IsEditingExistingItem && Nexts[1]">保存して次へ</el-dropdown-item>
-                <el-dropdown-item command="new">保存して新規作成</el-dropdown-item>
+                <el-dropdown-item command="prev" v-if="IsEditingExistingItem && Nexts[0]" :disabled="Processing">保存して前へ</el-dropdown-item>
+                <el-dropdown-item command="next" v-if="IsEditingExistingItem && Nexts[1]" :disabled="Processing">保存して次へ</el-dropdown-item>
+                <el-dropdown-item command="new" :disabled="Processing">保存して新規作成</el-dropdown-item>
               </el-dropdown-menu>
             </el-dropdown>
           </div>
           <div v-if="IsEditingExistingItem">
-            <el-button type="danger" icon="el-icon-delete" @click="RemoveCase()">削除</el-button>
+            <el-button type="danger" icon="el-icon-delete" @click="RemoveCase()" :disabled="Processing">削除</el-button>
           </div>
         </div>
       </div>
@@ -84,7 +87,7 @@ import InputProcedureTime from '@/components/Molecules/InputProcedureTime'
 import InputDateOfProcedure from '@/components/Molecules/InputDateOfProcedure'
 
 import { ZenToHan } from '@/modules/ZenHanChars'
-import Popups from '@/modules/Popups'
+import Popups from '@/modules/serve/Popups'
 import {
   CheckBasicInformations, ValidateAdditionalInformations,
   CheckSections, ValidateCategoryMatch,
@@ -113,7 +116,7 @@ export default {
       CaseData: {
         Name: '',
         Age: undefined,
-        InstitutionalPatientId: '',
+        PatientId: '',
         JSOGId: '',
         NCDId: '',
         DateOfProcedure: '',
@@ -126,14 +129,15 @@ export default {
         Notification: ''
       },
       Nexts: [0, 0],
-      Edited: false
+      Edited: false,
+      Processing: true
     })
   },
   // DataStoreから既存データの読み込みをする.
   //
-  // @prop {Number} SequentialId
+  // @prop {uid} DocumentId
   created () {
-    if (this.uid > 0) {
+    if (Number(this.uid) > 0) {
       const item = this.$store.getters.GetItemObject(this.uid)
       for (var key in this.CaseData) {
         if (item !== undefined && item[key] !== undefined) {
@@ -153,6 +157,8 @@ export default {
       this.$nextTick(() => {
         this.Edited = false
       })
+    } else {
+      this.Processing = false
     }
   },
   watch: {
@@ -239,7 +245,7 @@ export default {
     CancelEditing (offset = 0) {
       const isEmpty =
         this.CaseData.DateOfProcedure === '' &&
-        this.CaseData.InstitutionalPatientId.trim() === '' &&
+        this.CaseData.PatientId.trim() === '' &&
         this.CaseData.Name.trim() === '' &&
         this.CaseData.ProcedureTime === '' &&
         this.CaseData.Age === undefined &&
@@ -263,16 +269,22 @@ export default {
     },
     RemoveCase () {
       if (this.uid > 0 && Popups.confirm('この症例を削除します.よろしいですか?')) {
-        this.$store.dispatch('RemoveItem', { SequentialId: this.uid })
-        this.GoBackToList()
+        this.$store.dispatch('RemoveItem', { DocumentId: this.uid })
+          .then(_ => this.GoBackToList())
       }
     },
     CommitCase () {
+      if (this.Processing) {
+        return
+      }
       this.StoreCase()
         .then(() => this.GoBackToList(this.uid))
         .catch(e => Popups.alert(e.message))
     },
     CommitCaseAndGo (to = '') {
+      if (this.Processing) {
+        return
+      }
       // 新規(uid = '0')→新規(uid = '0')ではApp.vueで定義したRouterKeyが重複するための quick hack.
       // uid = '00' も uid > 0 がfalseで新規扱いになるのでそれを利用する.
       this.StoreCase()
@@ -295,20 +307,21 @@ export default {
     },
 
     async StoreCase () {
-      // データベース登録に用いるドキュメントを生成
+      this.Processing = true
 
+      // データベース登録に用いるドキュメントを生成
       const newDocument = {}
       Object.assign(newDocument, this.CaseData)
 
-      // 連番 (0 = 新規ドキュメントで連番付与される)
-      newDocument.SequentialId = Number(this.uid)
+      // 連番 (新規ドキュメントのuidは0もしくは00があるのでNumberで処理する)
+      newDocument.DocumentId = Number(this.uid)
 
       // 警告の削除
       delete newDocument.Notification
 
       // テキストフィールドの整形(trimと半角英数に置換)
       newDocument.Name = newDocument.Name.trim()
-      newDocument.InstitutionalPatientId = ZenToHan(newDocument.InstitutionalPatientId.trim()).replace(/[^\d\w-&]/g, '')
+      newDocument.PatientId = ZenToHan(newDocument.PatientId.trim()).replace(/[^\d\w-&]/g, '')
 
       if (newDocument.JSOGId.trim() === '') {
         delete newDocument.JSOGId
@@ -365,11 +378,18 @@ export default {
         ])
           .then(errors => {
             if (errors.filter(item => item).length > 0) {
+              this.Processing = false
               reject(new Error(errors.filter(item => item).join('\n')))
             } else {
               this.$store.dispatch('UpsertItem', newDocument)
-                .then(_ => resolve())
-                .catch(dberror => reject(dberror))
+                .then(_ => {
+                  this.Processing = false
+                  resolve()
+                })
+                .catch(dberror => {
+                  this.Processing = false
+                  reject(dberror)
+                })
             }
           })
       })

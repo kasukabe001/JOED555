@@ -48,7 +48,7 @@ const SearchSetting = {
         const queryRegex = new RegExp('^(' + queries.join('|') + ')$')
         return {
           $where: function () {
-            return this.InstitutionalPatientId
+            return this.PatientId
               .replace(/[-ｰー－～]/g, '')
               .match(queryRegex) !== null
           }
@@ -154,7 +154,7 @@ const SearchSetting = {
         .map(value => Number(value.replace(queryRegex, '$2')))
 
       if (queries.length > 0) {
-        return { SequentialId: { $in: [...queries] } }
+        return { DocumentId: { $in: [...queries] } }
       } else {
         return null
       }

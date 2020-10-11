@@ -87,7 +87,7 @@ export async function ValidateCase (item = {}) {
 export async function CheckBasicInformations (item) {
   return new Promise((resolve, reject) => {
     if (item.Age > 0 && item.Age < 130 &&
-      item.InstitutionalPatientId &&
+      item.PatientId &&
       item.DateOfProcedure.match(/^20[0-9]{2}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])$/) &&
       item.ProcedureTime
     ) {

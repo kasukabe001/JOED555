@@ -104,11 +104,11 @@ function BasicInformation (Record, CaseData) {
 
   // 患者IDを設定
   if (Record.ID) {
-    CaseData.InstitutionalPatientId = Record.ID
+    CaseData.PatientId = Record.ID
     return
   }
   if (Record['内部ID']) {
-    CaseData.InstitutionalPatientId = CaseData.DateOfProcedure.substr(0, 4) + Record['内部ID'].substr(5)
+    CaseData.PatientId = CaseData.DateOfProcedure.substr(0, 4) + Record['内部ID'].substr(5)
     return
   }
   throw RecordError

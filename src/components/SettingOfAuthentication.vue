@@ -35,7 +35,7 @@
 <script>
 import InputPasswordField from '@/components/Molecules/InputPasswordField'
 import InputSwitchField from '@/components/Molecules/InputSwitchField'
-import Popups from '@/modules/Popups'
+import Popups from '@/modules/serve/Popups'
 
 export default {
   name: 'SettingOfAuthentication',

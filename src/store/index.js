@@ -25,25 +25,25 @@ const store = new Vuex.Store({
     DataStore: [], // インメモリのデータベースレプリケーション
     // 以下データベースリストのクエリの待避
     Filter: {
-      SequentialId: { $gt: 0 }
+      DocumentId: { $gt: 0 }
     },
     Sort: {
-      SequentialId: -1
+      DocumentId: -1
     },
     // Listの表示状態の待避
     ShowWelcomeBanner: true,
-    defaultViewSettings: { Sort: { Item: 'SequentialId', Order: -1 }, Filter: [] },
-    preservedViewSettings: { Sort: { Item: 'SequentialId', Order: -1 }, Filter: [] }
+    defaultViewSettings: { Sort: { Item: 'DocumentId', Order: -1 }, Filter: [] },
+    preservedViewSettings: { Sort: { Item: 'DocumentId', Order: -1 }, Filter: [] }
   },
   getters: {
     ApplicationVersion (state) {
       return state.ApplicationVersion
     },
-    // 現在の DataStore 中の SequentialId を配列で返す.
+    // 現在の DataStore 中の DocumentId を配列で返す.
     //
     GetUids (state) {
       return state.DataStore.map(
-        item => item.SequentialId
+        item => item.DocumentId
       )
     },
     // 現在の DataStore の長さを配列で返す.
@@ -51,7 +51,7 @@ const store = new Vuex.Store({
     GetNumberOfCases (state) {
       return state.DataStore.length
     },
-    // 指定された SequentialId の {Array} [前の SequqntialId, 後の SequqntialId] を返す.
+    // 指定された DocumentId の {Array} [前の SequqntialId, 後の SequqntialId] を返す.
     // 存在しないものは 0.
     //
     GetNextUids (state, getters) {
@@ -66,13 +66,13 @@ const store = new Vuex.Store({
         }
       }
     },
-    // SequentialId をもつドキュメントを取得する
+    // DocumentId をもつドキュメントを取得する
     //
     // @param {Number}
     GetItemObject (state) {
-      return function (SequentialId) {
+      return function (DocumentId) {
         const FilterdItems = state.DataStore.filter((item) => {
-          return item.SequentialId === SequentialId
+          return item.DocumentId === DocumentId
         })
         return FilterdItems[0]
       }
@@ -143,8 +143,8 @@ const store = new Vuex.Store({
           }
         }
 
-        if (!paramFilter.SequentialId) {
-          paramFilter.SequentialId = { $gt: 0 }
+        if (!paramFilter.DocumentId) {
+          paramFilter.DocumentId = { $gt: 0 }
         }
 
         if (paramFilter.DateOfProcedure) {
@@ -230,11 +230,12 @@ const store = new Vuex.Store({
     dbRemove (context, payload) {
       return NedbAccess.Remove(payload, context.state.DatabaseInstance)
     },
+
     // DataStoreの更新. データベースの操作後は必ず実行する.
     //
     // @Param {Object} Filter: {field: condition,...}, Sort: {field: order,...}
     ReloadDatastore (context, payload = {}) {
-      const Query = { SequentialId: { $gt: 0 } }
+      const Query = { DocumentId: { $gt: 0 } }
       const Sort = {}
       Object.assign(Query, payload.Filter ? payload.Filter : context.state.Filter)
       Object.assign(Sort, payload.Sort ? payload.Sort : context.state.Sort)
@@ -256,7 +257,7 @@ const store = new Vuex.Store({
       return new Promise((resolve, reject) => {
         context.dispatch('dbCount', {
           Query: {
-            InstitutionalPatientId: payload.InstitutionalPatientId,
+            PatientId: payload.PatientId,
             DateOfProcedure: payload.DateOfProcedure
           }
         }).then(count => {
@@ -265,7 +266,7 @@ const store = new Vuex.Store({
         },
         error => reject(error))
       }).then(() => {
-        payload.SequentialId = '__autoid__'
+        payload.DocumentId = '__autoid__'
         return context.dispatch('dbInsert', {
           Document: payload
         }).then(_ => {
@@ -288,8 +289,8 @@ const store = new Vuex.Store({
           }).then(newid => {
             // 登録
             context.dispatch('dbUpdate', {
-              Query: { SequentialId: '__autoid__' },
-              Update: { $set: { SequentialId: newid } },
+              Query: { DocumentId: '__autoid__' },
+              Update: { $set: { DocumentId: newid } },
               Options: {}
             }).then(_ => {
               context.dispatch('ReloadDatastore')
@@ -299,7 +300,7 @@ const store = new Vuex.Store({
             // 連番付与登録に失敗した場合仮登録の部分は削除-rollback
             context.dispatch('dbRemove', {
               Query: {
-                SequentialId: '__autoid__'
+                DocumentId: '__autoid__'
               },
               Options: {
                 multi: true
@@ -315,25 +316,25 @@ const store = new Vuex.Store({
       })
     },
 
-    // 症例データの更新. Case.SequentialId をキーとするため、有効な SequentialId であることが必須.
+    // 症例データの更新. Case.DocumentId をキーとするため、有効な DocumentId であることが必須.
     // 同一日時に同一IDの症例は登録出来ない.
     //
     // @param {Object} オブジェクトCase
     ReplaceItem (context, payload) {
       return new Promise((resolve, reject) => {
-        if (payload.SequentialId <= 0) reject(new Error('内部IDの指定に問題があります.'))
+        if (payload.DocumentId <= 0) reject(new Error('内部IDの指定に問題があります.'))
         context.dispatch('dbFind', {
           Query: {
-            InstitutionalPatientId: payload.InstitutionalPatientId,
+            PatientId: payload.PatientId,
             DateOfProcedure: payload.DateOfProcedure
           },
-          Projection: { SequentialId: 1 }
+          Projection: { DocumentId: 1 }
         }).then(documents => {
           for (const document of documents) {
-            if (document.SequentialId !== payload.SequentialId) reject(new Error('同一日に同一IDの症例は登録できません.'))
+            if (document.DocumentId !== payload.DocumentId) reject(new Error('同一日に同一IDの症例は登録できません.'))
           }
           context.dispatch('dbUpdate', {
-            Query: { SequentialId: payload.SequentialId },
+            Query: { DocumentId: payload.DocumentId },
             Update: payload,
             Options: {}
           }).then(_ => {
@@ -344,11 +345,11 @@ const store = new Vuex.Store({
       })
     },
 
-    // 症例データの登録. SequentialIdで、新規(===0)・更新(>0)を区別する.
+    // 症例データの登録. DocumentIdで、新規(===0)・更新(>0)を区別する.
     //
     // @param {Object} オブジェクトCase
     UpsertItem (context, payload) {
-      if (payload.SequentialId && payload.SequentialId > 0) {
+      if (payload.DocumentId && payload.DocumentId > 0) {
         return context.dispatch('ReplaceItem', payload)
       } else {
         return context.dispatch('InsertItem', payload)
@@ -357,12 +358,12 @@ const store = new Vuex.Store({
 
     // 症例データの削除.
     //
-    // @param {Object} オブジェクトCase (検索に用いるのは SequentialId のみ)
+    // @param {Object} オブジェクトCase (検索に用いるのは DocumentId のみ)
     RemoveItem (context, payload) {
       return new Promise((resolve, reject) => {
-        if (payload.SequentialId <= 0) reject(new Error())
+        if (payload.DocumentId <= 0) reject(new Error())
         context.dispatch('dbRemove', {
-          Query: { SequentialId: payload.SequentialId }
+          Query: { DocumentId: payload.DocumentId }
         }).then(_ => {
           context.dispatch('ReloadDatastore')
           resolve()
@@ -378,7 +379,7 @@ const store = new Vuex.Store({
       return new Promise((resolve, reject) => {
         DatabaseInstance.find(
           {
-            SequentialId: { $gt: 0 }
+            DocumentId: { $gt: 0 }
           },
           {
             DateOfProcedure: 1,

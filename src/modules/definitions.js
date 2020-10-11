@@ -13,11 +13,11 @@ class DatabaseProperty {
 
 class Cases {
     _id // Applied by nedb
-    SequentialId // Number
+    DocumentId // Number
     UniqueId // String : created on export
     Name // String
     Age // Number
-    InstitutionalPatientId // String
+    PatientId // String
     JSOGId // String
     NCDId // String
     DateOfProcedure // DateString

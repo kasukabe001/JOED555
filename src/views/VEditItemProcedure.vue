@@ -10,6 +10,7 @@
         :Pane3.sync="SelectedItem" :Pane3Items="CandidateItems"
         @Pane3Change="OnCandidateSelected()"
         @Pane3DblClick="CommitChanges()"
+        :disabled="disabled"
       >
       </ThreePaneSelections>
 
@@ -37,13 +38,13 @@
         </div>
         <div class="w40 selectionbox" v-if="Description.Multi">
           <label v-for="item in Description.Options" :key="item">
-            <input type="checkbox" v-model="DescriptionValue" :value="item" />
+            <input type="checkbox" v-model="DescriptionValue" :value="item" :disabled="disabled"/>
             {{spliceMarker(item)}}
             <br/>
           </label>
         </div>
         <div class="w40 selectionbox" v-else>
-          <select v-model="DescriptionValue[0]" @dblclick="CommitChanges()">
+          <select v-model="DescriptionValue[0]" @dblclick="CommitChanges()" :disabled="disabled">
             <option v-for="item of Description.Options"
               :key="item"
               :value="item">
@@ -68,19 +69,19 @@
         <div class="w40" v-show="ExpandEditsection">
             <input type="text"
               v-model="EditableItem"
-              :disabled="!UserEditingAllowed"
+              :disabled="disabled || !UserEditingAllowed"
               placeholder="カテゴリ選択後に検索可能になります"
             />
         </div>
         <div class="w20" v-show="ExpandEditsection">
-          <el-button type="primary" @click="SetCandidateItemsByFreeword()" icon="el-icon-search">候補を検索</el-button>
+          <el-button type="primary" @click="SetCandidateItemsByFreeword()" icon="el-icon-search" :disabled="disabled">候補を検索</el-button>
         </div>
       </div>
 
       <div class="content-bottom">
         <div class="controls">
-          <el-button type="primary" @click="GoBack" :disabled="disableCancel">取り消し</el-button>
-          <el-button type="primary" @click="CommitChanges">登録</el-button>
+          <el-button type="primary" @click="GoBack" :disabled="disabled || disableCancel">取り消し</el-button>
+          <el-button type="primary" @click="CommitChanges" :disabled="disabled">登録</el-button>
         </div>
       </div>
     </div>
@@ -91,7 +92,7 @@
 import EditItemMixins from '@/mixins/EditItemMixins'
 import ProcedureTree from '@/modules/ProcedureItemList'
 import { getMatchesInProcedures } from '@/modules/CloseMatches'
-import Popups from '@/modules/Popups.js'
+import Popups from '@/modules/serve/Popups'
 import ThreePaneSelections from '@/components/Molecules/3PaneSelections'
 
 const ProceduresTree = new ProcedureTree()
@@ -104,6 +105,10 @@ export default {
   components: { ThreePaneSelections },
   props: {
     disableCancel: {
+      type: Boolean,
+      default: false
+    },
+    disabled: {
       type: Boolean,
       default: false
     }

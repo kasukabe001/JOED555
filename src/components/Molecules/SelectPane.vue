@@ -5,7 +5,9 @@
       ref="SelectPane" :size="lines"
       v-model="PaneValue"
       @change="Change()"
-      @dblckick="DblClick()">
+      @dblckick="DblClick()"
+      :disabled="disabled"
+      >
       <option v-if="items.length===0" disabled :value="null"/>
       <option v-for="(item,key,index) in items"
         :key="index"
@@ -40,6 +42,10 @@ export default {
     lines: {
       type: [String, Number],
       default: 8
+    },
+    disabled: {
+      type: Boolean,
+      default: false
     }
   },
   computed: {

@@ -8,6 +8,7 @@
         v-model="Pane1Selection"
         :items="Pane1Items"
         @change="Pane1Changed()"
+        :disabled="disabled"
         >
       </SelectPane>
     </div>
@@ -19,7 +20,8 @@
         v-model="Pane2Selection"
         :items="Pane2Items"
         @change="Pane2Changed()"
-        >
+        :disabled="disabled"
+       >
       </SelectPane>
     </div>
     <div class="w60 selectionbox">
@@ -31,6 +33,7 @@
         :items="Pane3Items"
         @change="Pane3Changed()"
         @dblclick="Pane3DblClick()"
+        :disabled="disabled"
         >
       </SelectPane>
     </div>
@@ -92,6 +95,10 @@ export default {
       type: Array,
       default: () => [],
       required: true
+    },
+    disabled: {
+      type: Boolean,
+      default: false
     }
   },
   computed: {

@@ -20,7 +20,13 @@ import ProcedureTimeSelections from '@/modules/ProcedureTimes'
 
 export default {
   name: 'InputProcedureTime',
-  props: ['value'],
+  props: {
+    value: {},
+    disabled: {
+      type: Boolean,
+      default: false
+    }
+  },
   data () {
     return ({
       ProcedureTimeSelections: ProcedureTimeSelections()

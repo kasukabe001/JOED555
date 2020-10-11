@@ -20,6 +20,7 @@
     <div class="caseitem-controller">
         <i class="el-icon-edit button-font" @click="MoveToEditView()"></i>
     </div>
+    <div class="caseitem-loading" v-if="Loading"><i class="el-icon-loading"></i></div>
   </div>
 </template>
 
@@ -36,7 +37,10 @@ export default {
     }
   },
   data () {
-    return {}
+    return {
+      Loading: false,
+      Item: {}
+    }
   },
   computed: {
     ItemDocument () {
@@ -50,7 +54,7 @@ export default {
     },
     PersonalInformation () {
       return {
-        Id: this.ItemDocument.InstitutionalPatientId,
+        Id: this.ItemDocument.PatientId,
         Name: this.ItemDocument.Name,
         Age: this.ItemDocument.Age
       }
@@ -66,8 +70,13 @@ export default {
     }
   },
   methods: {
+    LoadItem () {
+
+    },
     MoveToEditView () {
-      this.$router.push({ name: 'edit', params: { uid: this.uid } })
+      if (!this.Loading) {
+        this.$router.push({ name: 'edit', params: { uid: this.uid } })
+      }
     }
   },
   components: {
@@ -115,4 +124,15 @@ div.caseitem-controller
   font-size: 0.9rem
 .button-font
   font-size: 1.4rem
+div.caseitem-loading
+  z-index: +1
+  position: absolute
+  left: 0
+  top: 0
+  right: 0
+  bottom: 0
+  width: 100%
+  height: 100%
+  margin: auto
+  background: rgba(0, 0, 0, 0.33)
 </style>

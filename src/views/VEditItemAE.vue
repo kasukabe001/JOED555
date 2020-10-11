@@ -642,7 +642,7 @@
 
 <script>
 import { ZenToHanNumbers } from '@/modules/ZenHanChars'
-import Popups from '@/modules/Popups.js'
+import Popups from '@/modules/serve/Popups'
 
 export default {
   props: {

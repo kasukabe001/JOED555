@@ -49,7 +49,7 @@
 import InputSwitchField from '@/components/Molecules/InputSwitchField'
 import SelectYear from '@/components/Molecules/SelectYear'
 import DbItems from '@/modules/DbItemHandler'
-import Popups from '@/modules/Popups'
+import Popups from '@/modules/serve/Popups'
 import { ValidateCase } from '@/modules/CaseValidater'
 
 export default {
@@ -155,7 +155,7 @@ export default {
         .then(_ => {
           return new Promise((resolve, reject) => {
             const selector = {
-              SequentialId: { $gt: 0 },
+              DocumentId: { $gt: 0 },
               Imported: { $exists: true },
               Notification: { $exists: true }
             }
@@ -178,7 +178,7 @@ export default {
     //  必須項目の有無
     //  項目の重複(ditto含む)
     CheckConsistency () {
-      // マーキングを含む作業にはSequentialIdではなく、indexされている_idを使用する.
+      // マーキングを含む作業にはDocumentIdではなく、indexされている_idを使用する.
       function CheckConsistencies (documentids, numberOfpool = 10) {
         const idPool = Object.assign([], documentids)
         const sources = idPool.splice(0, numberOfpool)
@@ -239,7 +239,7 @@ export default {
 
       const DatabaseInstance = this.$store.state.DatabaseInstance
       const selector = {
-        SequentialId: { $gt: 0 }
+        DocumentId: { $gt: 0 }
       }
       // let ProgressStep = 1
       this.ProgressStepThree = 0
@@ -294,7 +294,7 @@ export default {
         .then(_ => {
           return new Promise((resolve, reject) => {
             const selector = {
-              SequentialId: { $gt: 0 }
+              DocumentId: { $gt: 0 }
             }
             if (this.ExportYear !== '') {
               const reg = new RegExp('^' + this.ExportYear + '-')
@@ -302,7 +302,7 @@ export default {
             }
 
             DatabaseInstance.find(selector)
-              .sort({ SequentialId: 1 })
+              .sort({ DocumentId: 1 })
               .exec((error, documents) => {
                 if (error) reject(error)
                 resolve(documents)
