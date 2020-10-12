@@ -14,13 +14,13 @@ const store = new Vuex.Store({
   },
   state: {
     ApplicationVersion: '5.00.0929.vueserve',
-    LoadAtOnce: 100,
-    // serve版で使用されるデータベースインスタンス - electronでは消滅するため必ずactionを経由する必要あり
+    LoadAtOnce: 25,
+    // serve版で使用されるデータベースインスタンス - 必ずactionを経由して利用
+    // electron版では使用しないのでコメントアウト
     DatabaseInstance: undefined,
-    Uids: {
-      List: [], // 表示対象となるuidの全リスト
-      RangeFrom: -1, // ロードされているuidの最初のインデックス
-      RangeTo: -1 // ロードされているuidの最期のインデックス
+    DocumentIds: {
+      List: [], // queryされたuidの全リスト
+      Range: 0 // 表示対象のuidの数
     },
     DataStore: [], // インメモリのデータベースレプリケーション
     // 以下データベースリストのクエリの待避
@@ -39,48 +39,59 @@ const store = new Vuex.Store({
     ApplicationVersion (state) {
       return state.ApplicationVersion
     },
-    // 現在の DataStore 中の DocumentId を配列で返す.
+    // 現在queryで設定されているドキュメントの DocumentId を配列で返す.
     //
-    GetUids (state) {
-      return state.DataStore.map(
-        item => item.DocumentId
-      )
+    Uids (state) {
+      return state.DocumentIds.List
     },
-    // 現在の DataStore の長さを配列で返す.
+    // 現在表示されているドキュメントの DocumentId を配列で返す.
     //
-    GetNumberOfCases (state) {
-      return state.DataStore.length
+    PagedUids (state) {
+      return state.DocumentIds.List.slice(0, state.DocumentIds.Range)
     },
-    // 指定された DocumentId の {Array} [前の SequqntialId, 後の SequqntialId] を返す.
+    // 現在表示されているドキュメントの DocumentId を配列で返す.
+    //
+    PagedUidsRange (state) {
+      return state.DocumentIds.Range
+    },
+    // 現在queryで設定されているドキュメントの数を返す.
+    //
+    NumberOfCases (state) {
+      return state.DocumentIds.List.length
+    },
+    // 指定された DocumentId の {Array} [前の DocumentId, 後の DocumentId] を返す.
     // 存在しないものは 0.
     //
-    GetNextUids (state, getters) {
-      return function (currentUid) {
-        if (currentUid === 0) {
+    NextUids (state, getters) {
+      return function (Uid) {
+        if (Uid === 0) {
           return [0, 0]
         } else {
-          const index = getters.GetUids.findIndex(item => item === currentUid)
-          const prevUid = index === 0 ? 0 : getters.GetUids[index - 1]
-          const nextUid = index === getters.GetUids.length - 1 ? 0 : getters.GetUids[index + 1]
+          const listlength = state.DocumentIds.List.length
+          const index = state.DocumentIds.List.findIndex(item => item === Uid)
+          const prevUid = index === 0 ? 0 : getters.Uids[index - 1]
+          const nextUid = index === listlength - 1 ? 0 : getters.Uids[index + 1]
           return [prevUid, nextUid]
         }
       }
     },
-    // DocumentId をもつドキュメントを取得する
+    // DocumentId をもつドキュメントを取得する. ロードされていない場合は空のオブジェクトが返る.
     //
     // @param {Number}
-    GetItemObject (state) {
+    CaseDocument (state) {
       return function (DocumentId) {
-        const FilterdItems = state.DataStore.filter((item) => {
-          return item.DocumentId === DocumentId
-        })
-        return FilterdItems[0]
+        const DocumentIndex = state.DataStore.findIndex(item => item.DocumentId === DocumentId)
+        if (DocumentIndex !== -1) {
+          return state.DataStore[DocumentIndex]
+        } else {
+          return {}
+        }
       }
     },
     // VListのフィルター設定オブジェクトの待避
     //
     //
-    GetViewSettings (state) {
+    ViewSettings (state) {
       return state.preservedViewSettings
     }
   },
@@ -101,13 +112,36 @@ const store = new Vuex.Store({
         Database
       )
     },
-    // DataStoreに表示するドキュメントを保存する.
+    // DataStoreにデータベースをキャッシュする.
     //
     // @param {Object} document
     SetDatastore (state, payload) {
-      state.DataStore = payload
+      const foundIndex = state.DataStore.findIndex(item => item.DocumentId === payload.DocumentId)
+      if (foundIndex === -1) {
+        state.DataStore.push(payload)
+      } else {
+        state.DataStore[foundIndex] = payload
+      }
     },
-
+    // キャッシュDataStoreから指定のドキュメントを破棄.
+    //
+    // @param {Object} DocumentId
+    RemoveDatastore (state, payload) {
+      const foundIndex = state.DataStore.findIndex(item => item.DocumentId === payload.DocumentId)
+      if (foundIndex !== -1) {
+        state.DataStore.splice(foundIndex, 1)
+      }
+    },
+    // 表示対象数をクリア
+    //
+    ClearDocumentListRange (state) {
+      state.DocumentIds.Range = Math.min(state.LoadAtOnce, state.DocumentIds.List.length)
+    },
+    // 表示対象数を増やす
+    //
+    IncrementDocumentListRange (state) {
+      state.DocumentIds.Range = Math.min(state.DocumentIds.Range + state.LoadAtOnce, state.DocumentIds.List.length)
+    },
     // Sortの設定
     //
     // @param {Object}
@@ -231,26 +265,57 @@ const store = new Vuex.Store({
       return NedbAccess.Remove(payload, context.state.DatabaseInstance)
     },
 
-    // DataStoreの更新. データベースの操作後は必ず実行する.
+    // DocumentIdリストの更新. データベースの操作後は必ず実行する.
     //
     // @Param {Object} Filter: {field: condition,...}, Sort: {field: order,...}
     ReloadDatastore (context, payload = {}) {
       const Query = { DocumentId: { $gt: 0 } }
+      const Projection = { DocumentId: 1, _id: 0 }
       const Sort = {}
       Object.assign(Query, payload.Filter ? payload.Filter : context.state.Filter)
       Object.assign(Sort, payload.Sort ? payload.Sort : context.state.Sort)
 
-      return context.dispatch('dbFind', { Query: Query, Sort: Sort })
+      return context.dispatch('dbFind',
+        {
+          Query: Query,
+          Sort: Sort,
+          Projection: Projection
+        })
         .then(documents => {
-          context.commit('SetDatastore', documents)
+          context.state.DocumentIds.List.splice(0)
+          documents.forEach(doc => context.state.DocumentIds.List.push(doc.DocumentId))
         })
         .catch(error => error)
     },
 
+    // 症例データの取得. ドキュメントの取得自体はgettersを経由する
+    //
+    // @Param {Object} DocumentIdのみのオブジェクト
+    FetchDocument (context, payload) {
+      return new Promise((resolve, reject) => {
+        if (!payload.DocumentId) {
+          resolve(undefined)
+        } else {
+          // 既にロードされているデータであればキャッシュから取得する
+          const DataStoreIndex = context.state.DataStore.findIndex(item => item.DocumentId === payload.DocumentId)
+          if (DataStoreIndex !== -1) {
+            resolve(DataStoreIndex)
+          } else {
+            // キャッシュされていないデータなので読み込んでDatastoreにキャッシュする
+            context.dispatch('dbFindOne', { Query: { DocumentId: payload.DocumentId }, Projection: { _id: 0 } })
+              .then(fetcheddocument => {
+                context.commit('SetDatastore', fetcheddocument)
+                resolve()
+              })
+              .catch(error => reject(error))
+          }
+        }
+      })
+    },
     // 症例データの新規登録. 同一日時に同一IDの症例は登録出来ない.
     //
     // @param {Object} オブジェクトCase
-    InsertItem (context, payload) {
+    InsertDocument (context, payload) {
       // const DatabaseInstance = context.state.DatabaseInstance
       const ErrorAutonumberFailed = 'データベースエラーです. AUTO-NUMBERING FAILED'
 
@@ -293,7 +358,9 @@ const store = new Vuex.Store({
               Update: { $set: { DocumentId: newid } },
               Options: {}
             }).then(_ => {
+              // 登録完了
               context.dispatch('ReloadDatastore')
+              context.commit('ClearDocumentListRange')
               Promise.resolve()
             }).catch(error => Promise.reject(error))
           }).catch(error => {
@@ -320,7 +387,7 @@ const store = new Vuex.Store({
     // 同一日時に同一IDの症例は登録出来ない.
     //
     // @param {Object} オブジェクトCase
-    ReplaceItem (context, payload) {
+    ReplaceDocument (context, payload) {
       return new Promise((resolve, reject) => {
         if (payload.DocumentId <= 0) reject(new Error('内部IDの指定に問題があります.'))
         context.dispatch('dbFind', {
@@ -338,6 +405,7 @@ const store = new Vuex.Store({
             Update: payload,
             Options: {}
           }).then(_ => {
+            context.commit('RemoveDatastore', { DocumentId: payload.DocumentId })
             context.dispatch('ReloadDatastore')
             resolve()
           })
@@ -348,23 +416,25 @@ const store = new Vuex.Store({
     // 症例データの登録. DocumentIdで、新規(===0)・更新(>0)を区別する.
     //
     // @param {Object} オブジェクトCase
-    UpsertItem (context, payload) {
+    UpsertDocument (context, payload) {
       if (payload.DocumentId && payload.DocumentId > 0) {
-        return context.dispatch('ReplaceItem', payload)
+        return context.dispatch('ReplaceDocument', payload)
       } else {
-        return context.dispatch('InsertItem', payload)
+        return context.dispatch('InsertDocument', payload)
       }
     },
 
     // 症例データの削除.
     //
     // @param {Object} オブジェクトCase (検索に用いるのは DocumentId のみ)
-    RemoveItem (context, payload) {
+    RemoveDocument (context, payload) {
       return new Promise((resolve, reject) => {
         if (payload.DocumentId <= 0) reject(new Error())
         context.dispatch('dbRemove', {
           Query: { DocumentId: payload.DocumentId }
         }).then(_ => {
+          context.commit('RemoveDatastore', { DocumentId: payload.DocumentId })
+          context.commit('ClearDocumentListRange')
           context.dispatch('ReloadDatastore')
           resolve()
         }).catch(error => reject(error))
@@ -373,36 +443,26 @@ const store = new Vuex.Store({
 
     // 症例データのもつ DateOfProcedure から年次と症例数を集計したobjectを返す(async-promise)
     //
-    async GetYears (context) {
-      const DatabaseInstance = context.state.DatabaseInstance
-
+    GetYears (context) {
       return new Promise((resolve, reject) => {
-        DatabaseInstance.find(
+        context.dispatch('dbFind',
           {
-            DocumentId: { $gt: 0 }
-          },
-          {
-            DateOfProcedure: 1,
-            _id: 0
-          }).sort(
-          {
-            DateOfProcedure: -1
-          }).exec(
-          (error, documents) => {
-            if (error) {
-              reject(error)
-            } else {
-              const CountByYear = {}
-              for (const document of documents) {
-                const year = document.DateOfProcedure.substring(0, 4)
+            Query: { DocumentId: { $gt: 0 } },
+            Projection: { DateOfProcedure: 1, _id: 0 },
+            Sort: { DateOfProcedure: -1 }
 
-                if (!CountByYear[year]) CountByYear[year] = 0
-                CountByYear[year]++
-              }
-              resolve(CountByYear)
+          })
+          .then(documents => {
+            const CountByYear = {}
+            for (const document of documents) {
+              const year = document.DateOfProcedure.substring(0, 4)
+
+              if (!CountByYear[year]) CountByYear[year] = 0
+              CountByYear[year]++
             }
-          }
-        )
+            resolve(CountByYear)
+          })
+          .catch(error => reject(error))
       })
     }
 

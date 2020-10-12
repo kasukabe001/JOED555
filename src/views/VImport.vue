@@ -12,45 +12,50 @@
     <div>
       <InputFile @change="LoadFile"></InputFile>
       <el-button type="primary" :disabled="InFile.length <= 0" @click="ProcessFile()">読み込みを開始</el-button>
+      <el-button type="primary" :disabled="!ReadyToRegister" :loading="Processing" @click="CommitImported">読み込まれたデータの登録</el-button>
     </div>
 
     <el-collapse-transition>
-      <div class="export-progression" v-if="ProcessingStep">
-        <el-steps :active="ProcessingStep" process-status="warning" finish-status="success" direction="vertical" space="42px">
+      <div class="export-progression" v-if="ProcessStep">
+        <el-steps :active="ProcessStep" process-status="warning" finish-status="success" direction="vertical" space="42px">
           <el-step title="入力ファイルのフォーマット検証とフィールドの割り当て">
             <template #description>
-              <span>{{InFile.length}}件のデータが対象です.<br/></span>
-              <span v-if="FileIsLabeled">入力ファイルは提出用データです.必要に応じて患者IDは自動生成されます.</span>
+              <span>ファイル中に{{InFile.length}}件のデータがあります.<br/></span>
+              <span v-if="FileIsLabeled">指定のファイルは提出用データです.患者IDは登録番号から自動生成されます.</span>
             </template>
           </el-step>
           <el-step title="レコードの検証">
             <template #description>
-              <span v-if="QueryDocuments.length > 0">{{QueryDocuments.length}}件のデータが処理されました.</span>
+              <span v-if="QueryDocuments.length > 0">{{QueryDocuments.length}}件のデータが対象になります.</span>
+            </template>
+          </el-step>
+          <el-step title="登録" v-show="ProcessStep === 3">
+            <template #description>
+              <el-progress :percentage="ImportPercentage"></el-progress>
             </template>
           </el-step>
         </el-steps>
       </div>
     </el-collapse-transition>
 
-    <div>
-      <el-button type="primary" :disabled="!ReadyToRegister" @click="CommitImported">読み込まれたデータの登録</el-button>
-    </div>
-
+    <TheWrapper v-if="Processing"/>
   </div>
 </template>
 
 <script>
 import InputFile from '@/components/Molecules/InputFile'
-// import ValidateCase from '@/modules/CaseValidater'
+import TheWrapper from '@/components/Atoms/AtomTheWrapper'
 import { phraseTitledCSV, CreateDocument } from '@/modules/CSVimporter'
 import Popups from '@/modules/serve/Popups'
 
 export default {
   name: 'ViewImport',
-  components: { InputFile },
+  components: { InputFile, TheWrapper },
   data () {
     return ({
-      ProcessingStep: 0,
+      Processing: false,
+      ProcessStep: 0,
+      ImportPercentage: 0,
       InFile: [],
       FileIsLabeled: false,
       ReadyToRegister: false,
@@ -70,14 +75,14 @@ export default {
         Popups.alert('指定されたファイルは適切なJOED mergeファイルではありません.')
         this.ReadyToRegister = false
       }
-      this.ProcessingStep = 0
+      this.ProcessStep = 0
     },
     ProcessFile () {
       this.QueryDocuments.splice(0)
       try {
-        this.ProcessingStep = 1
+        this.ProcessStep = 1
         for (const record of this.InFile) {
-          console.log(record)
+          // console.log(record)
           const createddocument = CreateDocument(record)
           if (createddocument) {
             this.QueryDocuments.push(createddocument)
@@ -86,20 +91,26 @@ export default {
           }
         }
 
-        this.ProcessingStep = 2
+        this.ProcessStep = 2
         this.ReadyToRegister = true
       } catch (error) {
         console.log(error)
       }
     },
     async CommitImported () {
+      this.ProcessStep = 3
+      this.ImportPercentage = 0
+      this.Processing = true
+      let processedDocuments = 0
       for (const newdocument of this.QueryDocuments) {
         try {
-          await this.$store.dispatch('UpsertItem', newdocument)
+          await this.$store.dispatch('UpsertDocument', newdocument)
+          this.ImportPercentage = Math.round(++processedDocuments * 100 / this.QueryDocuments.length)
         } catch (error) {
           Popups.alert(error)
         }
       }
+      this.Processing = false
     }
   }
 }

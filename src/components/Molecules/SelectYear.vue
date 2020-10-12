@@ -1,6 +1,6 @@
 <template>
   <div>
-    <select v-model="SelectedValue" v-loading="loadingSelections" @click="onClickSelection()">
+    <select v-model="SelectedValue">
       <option v-for="(value, name) of Selections" :key="value" :value="name">{{name}}年 ({{value}}件)</option>
       <option value="">すべて</option>
     </select>
@@ -19,25 +19,21 @@ export default {
   },
   data () {
     return ({
-      Selections: {},
-      loadingSelections: false
+      Selections: {}
     })
+  },
+  mounted () {
+    this.$store.dispatch('GetYears')
+      .then(CountByYear => {
+        for (const year of Object.keys(CountByYear)) {
+          this.$set(this.Selections, year, CountByYear[year])
+        }
+      })
   },
   computed: {
     SelectedValue: {
       get () { return this.value },
       set (newvalue) { this.$emit('update', newvalue) }
-    }
-  },
-  methods: {
-    onClickSelection () {
-      this.loadingSelections = true
-      if (Object.keys(this.Selections).length === 0) {
-        this.$store.dispatch('GetYears').then((CountByYear) => {
-          Object.assign(this.Selections, CountByYear)
-          this.loadingSelections = false
-        })
-      }
     }
   }
 }

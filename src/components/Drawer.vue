@@ -42,7 +42,7 @@ export default {
       this.$store.dispatch('ReloadDatastore').then(_ => {
         this.$notify({
           title: '表示設定が変更されました',
-          message: this.$store.getters.GetNumberOfCases + '件表示します.',
+          message: this.$store.getters.NumberOfCases + '件表示します.',
           duration: 3000
         })
       })

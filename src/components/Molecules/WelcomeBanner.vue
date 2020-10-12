@@ -11,10 +11,9 @@
       </div>
 
       <div id="welcome-banner-control">
-        <label>
-          <input type="checkbox" v-model="ShowWelcomeMessage">
+        <el-checkbox v-model="ShowWelcomeMessage">
           次回起動時もこのメッセージを表示する
-        </label>
+        </el-checkbox>
       </div>
       <div id="welcome-banner-footer">
         日本産科婦人科内視鏡学会 調査普及委員会

@@ -3,17 +3,17 @@
     <div class="app-dialog w800p">
       <div class="edit-top">
         <div class="edit-top-left">
-          <InputDateOfProcedure v-model="CaseData.DateOfProcedure" :required="true" :disabled="Processing"/>
-          <InputTextField title="患者ID" :required="true" v-model="CaseData.PatientId" placeholder="施設の患者ID" :disabled="Processing"/>
-          <InputTextField title="患者名" v-model="CaseData.Name" :disabled="Processing"/>
-          <InputProcedureTime v-model="CaseData.ProcedureTime" :disabled="Processing"/>
+          <InputDateOfProcedure v-model="CaseData.DateOfProcedure" :required="true"/>
+          <InputTextField title="患者ID" :required="true" v-model="CaseData.PatientId" placeholder="施設の患者ID"/>
+          <InputTextField title="患者名" v-model="CaseData.Name"/>
+          <InputProcedureTime v-model="CaseData.ProcedureTime"/>
         </div>
         <div class="edit-top-right">
-          <InputTextField title="腫瘍登録番号" v-model="CaseData.JSOGId" placeholder="腫瘍登録患者No." :disabled="Processing"/>
-          <InputTextField title="NCD症例識別コード" v-model="CaseData.NCDId" placeholder="NCD症例識別コード" :disabled="Processing"/>
+          <InputTextField title="腫瘍登録番号" v-model="CaseData.JSOGId" placeholder="腫瘍登録患者No."/>
+          <InputTextField title="NCD症例識別コード" v-model="CaseData.NCDId" placeholder="NCD症例識別コード"/>
           <div> <!-- spacer -->
           </div>
-          <InputNumberField title="年齢" :required="true" v-model="CaseData.Age" :min="1" :max="120" :disabled="Processing"/>
+          <InputNumberField title="年齢" :required="true" v-model="CaseData.Age" :min="1" :max="120"/>
         </div>
       </div>
 
@@ -22,7 +22,6 @@
         @addnewitem="OpenEditView('diagnosis')"
         @edititem="OpenEditView('diagnosis', $event)"
         @removeitem="RemoveListItem('Diagnoses', $event)"
-        :disabled="Processing"
       />
 
       <SectionProcedures
@@ -30,7 +29,6 @@
         @addnewitem="OpenEditView('procedure')"
         @edititem="OpenEditView('procedure', $event)"
         @removeitem="RemoveListItem('Procedures', $event)"
-        :disabled="Processing"
       />
 
       <SectionAEs
@@ -38,7 +36,6 @@
         :optionValue.sync="isNoAEs"
         @addnewitem="OpenEditView('AE')"
         @removeitem="RemoveListItem('AEs', $event)"
-        :disabled="Processing"
       />
 
       <!-- Controles -->
@@ -47,24 +44,24 @@
 
       <div class="edit-controls">
         <div class="edit-controls-left">
-          <el-button type="warning" icon="el-icon-warning" @click="ShowNotification" v-if="CaseData.Notification" :disabled="Processing">入力内容の確認が必要です.</el-button>
+          <el-button type="warning" icon="el-icon-warning" @click="ShowNotification" v-if="CaseData.Notification">入力内容の確認が必要です.</el-button>
         </div>
         <div class="edit-controls-right">
           <div>
-            <el-button type="primary" icon="el-icon-arrow-left" @click="CancelEditing()" :disabled="Processing">戻る</el-button>
+            <el-button type="primary" icon="el-icon-arrow-left" @click="CancelEditing()">戻る</el-button>
           </div>
           <div>
-            <el-dropdown split-button type="primary" @click="CommitCase()" @command="CommitCaseAndGo" :disabled="Processing">
-              編集内容を保存
+            <el-dropdown split-button type="primary" @click="CommitCase()" @command="CommitCaseAndGo">
+              編集内容を保存<i class="el-icon-loading" v-if="Processing"/>
               <el-dropdown-menu slot="dropdown">
-                <el-dropdown-item command="prev" v-if="IsEditingExistingItem && Nexts[0]" :disabled="Processing">保存して前へ</el-dropdown-item>
-                <el-dropdown-item command="next" v-if="IsEditingExistingItem && Nexts[1]" :disabled="Processing">保存して次へ</el-dropdown-item>
-                <el-dropdown-item command="new" :disabled="Processing">保存して新規作成</el-dropdown-item>
+                <el-dropdown-item command="prev" v-if="IsEditingExistingItem && Nexts[0]">保存して前へ</el-dropdown-item>
+                <el-dropdown-item command="next" v-if="IsEditingExistingItem && Nexts[1]">保存して次へ</el-dropdown-item>
+                <el-dropdown-item command="new">保存して新規作成</el-dropdown-item>
               </el-dropdown-menu>
             </el-dropdown>
           </div>
           <div v-if="IsEditingExistingItem">
-            <el-button type="danger" icon="el-icon-delete" @click="RemoveCase()" :disabled="Processing">削除</el-button>
+            <el-button type="danger" icon="el-icon-delete" @click="RemoveCase()">削除</el-button>
           </div>
         </div>
       </div>
@@ -73,6 +70,7 @@
     <div>
       <router-view @data-upsert="EditListItem"></router-view>
     </div>
+    <TheWrapper v-if="Processing"/>
   </div>
 </template>
 
@@ -85,6 +83,7 @@ import InputTextField from '@/components/Molecules/InputTextField'
 import InputNumberField from '@/components/Molecules/InputNumberField'
 import InputProcedureTime from '@/components/Molecules/InputProcedureTime'
 import InputDateOfProcedure from '@/components/Molecules/InputDateOfProcedure'
+import TheWrapper from '@/components/Atoms/AtomTheWrapper'
 
 import { ZenToHan } from '@/modules/ZenHanChars'
 import Popups from '@/modules/serve/Popups'
@@ -103,7 +102,8 @@ export default {
     InputDateOfProcedure,
     SectionDiagnoses,
     SectionProcedures,
-    SectionAEs
+    SectionAEs,
+    TheWrapper
   },
   props: {
     uid: {
@@ -136,27 +136,32 @@ export default {
   // DataStoreから既存データの読み込みをする.
   //
   // @prop {uid} DocumentId
-  created () {
+  mounted () {
     if (Number(this.uid) > 0) {
-      const item = this.$store.getters.GetItemObject(this.uid)
-      for (var key in this.CaseData) {
-        if (item !== undefined && item[key] !== undefined) {
-          if (
-            toString.call(item[key]) === '[object Object]' ||
-            toString.call(item[key]) === '[object Array]'
-          ) {
-            Object.assign(this.CaseData[key], item[key])
-            this.$nextTick()
-          } else {
-            this.CaseData[key] = item[key]
+      this.$store.dispatch('FetchDocument', { DocumentId: this.uid })
+        .then(_ => {
+          const casedocument = this.$store.getters.CaseDocument(this.uid)
+          for (var key in this.CaseData) {
+            if (casedocument !== undefined && casedocument[key] !== undefined) {
+              switch (toString.call(casedocument[key])) {
+                case '[object Object]':
+                  this.CaseData[key] = Object.assign(this.CaseData[key], casedocument[key])
+                  break
+                case '[object Array]':
+                  casedocument[key].forEach(item => this.CaseData[key].push(item))
+                  break
+                default:
+                  this.CaseData[key] = casedocument[key]
+              }
+            }
           }
-        }
-      }
-      this.Nexts.splice(0, 2, ...this.$store.getters.GetNextUids(this.uid))
+          this.Nexts.splice(0, 2, ...this.$store.getters.NextUids(this.uid))
 
-      this.$nextTick(() => {
-        this.Edited = false
-      })
+          this.$nextTick(_ => {
+            this.Processing = false
+            this.Edited = false
+          })
+        })
     } else {
       this.Processing = false
     }
@@ -269,7 +274,7 @@ export default {
     },
     RemoveCase () {
       if (this.uid > 0 && Popups.confirm('この症例を削除します.よろしいですか?')) {
-        this.$store.dispatch('RemoveItem', { DocumentId: this.uid })
+        this.$store.dispatch('RemoveDocument', { DocumentId: this.uid })
           .then(_ => this.GoBackToList())
       }
     },
@@ -381,7 +386,7 @@ export default {
               this.Processing = false
               reject(new Error(errors.filter(item => item).join('\n')))
             } else {
-              this.$store.dispatch('UpsertItem', newDocument)
+              this.$store.dispatch('UpsertDocument', newDocument)
                 .then(_ => {
                   this.Processing = false
                   resolve()

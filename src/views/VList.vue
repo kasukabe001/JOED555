@@ -14,6 +14,10 @@
 
     <div class="itemlist">
       <Caseitem v-for="uid in Uids" :key="uid" :uid="uid" />
+      <InfiniteLoading @infinite="HandleInfinite">
+        <span slot="no-more"></span>
+        <span slot="no-results"></span>
+      </InfiniteLoading>
     </div>
 
     <WelcomeBanner v-if="ShowWelcomeBanner"></WelcomeBanner>
@@ -28,11 +32,12 @@ import NewEntryButton from '@/components/Atoms/AtomNewEntryButton'
 import Caseitem from '@/components/Caseitem'
 import Drawer from '@/components/Drawer'
 import WelcomeBanner from '@/components/Molecules/WelcomeBanner'
+import InfiniteLoading from 'vue-infinite-loading'
 
 export default {
   name: 'ViewList',
   components: {
-    DrawerButton, NewEntryButton, Caseitem, Drawer, WelcomeBanner
+    DrawerButton, NewEntryButton, Caseitem, Drawer, WelcomeBanner, InfiniteLoading
   },
   created () {
     if (this.$store.state.ShowWelcomeBanner && !this.$store.getters['system/ShowWelcomeMessage']) {
@@ -52,7 +57,7 @@ export default {
   },
   computed: {
     Uids () {
-      return this.$store.getters.GetUids
+      return this.$store.getters.PagedUids
     },
     ShowWelcomeBanner () {
       return this.$store.state.ShowWelcomeBanner
@@ -67,6 +72,14 @@ export default {
     },
     CloseDrawer () {
       this.showMenuDrawer = false
+    },
+    HandleInfinite (state) {
+      this.$store.commit('IncrementDocumentListRange')
+      if (this.$store.getters.PagedUidsRange === this.$store.getters.NumberOfCases) {
+        state.complete()
+      } else {
+        state.loaded()
+      }
     }
   }
 }

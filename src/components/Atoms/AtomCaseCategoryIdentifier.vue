@@ -9,6 +9,9 @@ export default {
     category: {
       type: String,
       required: true
+    },
+    notification: {
+      default: false
     }
   },
   computed: {
@@ -21,7 +24,12 @@ export default {
         子宮鏡: '#00BBFF',
         卵管鏡: '#FFD000'
       }
-      return { backgroundColor: colorTable[this.category] }
+      return this.notification
+        ? { backgroundColor: colorTable[this.category] }
+        : {
+          backgroundColor: colorTable[this.category],
+          'border-color': 'var(--color-warning)'
+        }
     },
     BadgedClass () {
       switch (this.category) {
@@ -39,7 +47,7 @@ export default {
 <style lang='sass'>
 div.casecategory
   position: relative
-  border: #444444 2px solid
+  border: var(--color-primary) 2px solid
   margin: auto
   width: 1.7rem
   height: 1.7rem
@@ -54,6 +62,6 @@ div.badged::after
   height: 0
   border-top: 0.45rem solid transparent
   border-left: 0.45rem solid transparent
-  border-right: 0.45rem solid #FA00A4
-  border-bottom: 0.45rem solid #FA00A4
+  border-right: 0.45rem solid var(--color-danger)
+  border-bottom: 0.45rem solid var(--color-danger)
 </style>

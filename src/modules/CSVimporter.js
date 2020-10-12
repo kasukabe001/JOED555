@@ -59,7 +59,10 @@ export function phraseTitledCSV (loadeddocument) {
 
 // eslint-disable-next-line no-unused-vars
 export function CreateDocument (record) {
-  const CaseData = { Imported: true }
+  const CaseData = {
+    Imported: true,
+    Notification: 'インポートされたデータです.編集画面で確認後に再保存が必要です.\n'
+  }
 
   try {
     DateOfProcedure(record, CaseData)
@@ -261,7 +264,12 @@ function DiagnosesAndProceduresSecondary (Record, CaseData) {
 
 function AEs (Record, CaseData) {
   if (Record['合併症有無'] !== undefined) {
-    CaseData.PresentAE = Record['合併症有無'] !== 'なし'
+    if (Record['合併症有無'] === 'なし') {
+      CaseData.PresentAE = false
+    } else {
+      CaseData.PresentAE = true
+      CaseData.Notification = (CaseData.Notification || '') + '合併症の再入力が必要です.\n'
+    }
   } else {
     throw RecordError
   }

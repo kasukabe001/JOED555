@@ -8,7 +8,7 @@
         <span class="w20"> {{DateOfProcedure}} </span>
         <span class="w20"> {{PersonalInformation.Id}} </span>
         <span class="w30 truncatable"> {{PersonalInformation.Name}} </span>
-        <span class="w10"> ( {{PersonalInformation.Age}}歳 ) </span>
+        <span class="w10"> {{PersonalInformation.Age}} </span>
         <span class="w20"></span>
       </div>
       <div class="caseitem-row">
@@ -18,9 +18,9 @@
       </div>
     </div>
     <div class="caseitem-controller">
-        <i class="el-icon-edit button-font" @click="MoveToEditView()"></i>
+        <i class="el-icon-loading" v-if="Loading"></i>
+        <i class="el-icon-edit button-font" @click="MoveToEditView()" v-if="!Loading"></i>
     </div>
-    <div class="caseitem-loading" v-if="Loading"><i class="el-icon-loading"></i></div>
   </div>
 </template>
 
@@ -32,41 +32,58 @@ export default {
   name: 'Caseitem',
   props: {
     uid: {
-      type: [Number, String],
       required: true
     }
   },
   data () {
     return {
-      Loading: false,
-      Item: {}
+      Loading: true
+    }
+  },
+  mounted () {
+    if (this.uid > 0) {
+      this.$store
+        .dispatch('FetchDocument', { DocumentId: this.uid })
+        .then(_ => {
+          this.Loading = false
+          this.$nextTick()
+        })
+        .catch(e => e)
+    } else {
+      this.Loading = false
     }
   },
   computed: {
     ItemDocument () {
-      return this.$store.getters.GetItemObject(this.uid)
+      return this.Loading ? {} : this.$store.getters.CaseDocument(this.uid)
     },
     Category () {
-      return this.ItemDocument.TypeOfProcedure
+      return this.Loading ? '' : this.ItemDocument.TypeOfProcedure
     },
     DateOfProcedure () {
-      return this.ItemDocument.DateOfProcedure
+      return this.Loading ? '' : this.ItemDocument.DateOfProcedure
     },
     PersonalInformation () {
-      return {
-        Id: this.ItemDocument.PatientId,
-        Name: this.ItemDocument.Name,
-        Age: this.ItemDocument.Age
-      }
+      return this.Loading
+        ? {
+          Id: '',
+          Name: 'Loading',
+          Age: ''
+        }
+        : {
+          Id: this.ItemDocument.PatientId,
+          Name: this.ItemDocument.Name ? this.ItemDocument.Name : '',
+          Age: this.ItemDocument.Age ? '( ' + Number(this.ItemDocument.Age) + '歳 )' : ''
+        }
     },
     Diagnosis () {
-      return DbItems.getItemValue(this.ItemDocument.Diagnoses[0])
+      return this.Loading ? '' : DbItems.getItemValue(this.ItemDocument.Diagnoses[0])
     },
     Procedure () {
-      return DbItems.getItemValue(this.ItemDocument.Procedures[0])
+      return this.Loading ? '' : DbItems.getItemValue(this.ItemDocument.Procedures[0])
     },
     Notification () {
-      return this.ItemDocument.PresentAE ? '合併症あり' : ''
+      return !this.Loading && this.ItemDocument.PresentAE ? '合併症あり' : ''
     }
   },
   methods: {
@@ -124,15 +141,4 @@ div.caseitem-controller
   font-size: 0.9rem
 .button-font
   font-size: 1.4rem
-div.caseitem-loading
-  z-index: +1
-  position: absolute
-  left: 0
-  top: 0
-  right: 0
-  bottom: 0
-  width: 100%
-  height: 100%
-  margin: auto
-  background: rgba(0, 0, 0, 0.33)
 </style>

@@ -15,8 +15,8 @@
     </div>
 
     <el-collapse-transition>
-      <div class="export-progression" v-if="ProcessingStep !== undefined">
-        <el-steps :active="ProcessingStep" process-status="warning" finish-status="success" direction="vertical" space="42px">
+      <div class="export-progression" v-if="ProcessStep !== undefined">
+        <el-steps :active="ProcessStep" process-status="warning" finish-status="success" direction="vertical" space="42px">
           <el-step title="システム設定" />
           <el-step title="要修正データの修正を確認" />
           <el-step title="妥当性の検証">
@@ -35,19 +35,25 @@
       </div>
     </el-collapse-transition>
 
-    <div>
-      <textarea :value="OutputString" v-show="ShowPreview" cols="80" rows="10" disabled></textarea>
-    </div>
+    <TheWrapper v-if="ShowPreview" alpha="60" @click="ShowPreview = false">
+      <div id="preview">
+        画面のクリックで戻ります.<br/>
+        <pre>{{OutputString}}</pre>
+      </div>
+    </TheWrapper>
     <div>
       <el-button type="primary" :disabled="!ReadyForExport" @click="ShowPreview = true">出力先結果の確認</el-button>
-      <el-button type="primary" :disabled="!ReadyForExport" @click="Download()">出力先を指定してファイルの出力</el-button>
+      <el-button type="primary" :disabled="!ReadyForExport" @click="Download()" :loading="Processing">出力先を指定してファイルの出力</el-button>
     </div>
+
+    <TheWrapper v-if="Processing"/>
   </div>
 </template>
 
 <script>
 import InputSwitchField from '@/components/Molecules/InputSwitchField'
 import SelectYear from '@/components/Molecules/SelectYear'
+import TheWrapper from '@/components/Atoms/AtomTheWrapper'
 import DbItems from '@/modules/DbItemHandler'
 import Popups from '@/modules/serve/Popups'
 import { ValidateCase } from '@/modules/CaseValidater'
@@ -55,7 +61,7 @@ import { ValidateCase } from '@/modules/CaseValidater'
 export default {
   name: 'ViewExport',
   components: {
-    SelectYear, InputSwitchField
+    SelectYear, InputSwitchField, TheWrapper
   },
   data () {
     return ({
@@ -63,10 +69,10 @@ export default {
       ExportDateOfProcedure: true,
       Selector: {},
 
-      ProcessingStep: undefined,
+      Processing: false,
+      ProcessStep: undefined,
       ProgressStepThree: 0,
       ProgressStepFour: 0,
-      ProcessingAbort: false,
       ReadyForExport: false,
 
       ShowPreview: false,
@@ -75,13 +81,12 @@ export default {
   },
   methods: {
     StartProcessing () {
-      this.ProcessingPreparation = true
+      this.Processing = true
       this.ProgressStepFour = 0
-      this.ProcessingAbort = false
       this.ReadyForExport = false
       this.ShowPreview = false
 
-      this.ProcessingStep = 0
+      this.ProcessStep = 0
 
       // transitionの時間だけちょっと待つ（正直無駄）
       new Promise((resolve) => setTimeout(resolve, 500))
@@ -89,35 +94,37 @@ export default {
           return this.CheckSystem()
         })
         .then(_ => {
-          this.ProcessingStep++
+          this.ProcessStep++
           return this.CheckImported()
         })
         .then(_ => {
-          this.ProcessingStep++
+          this.ProcessStep++
           return this.CheckConsistency()
         })
         .then(_ => {
-          this.ProcessingStep++
+          this.ProcessStep++
           return this.CreateExportData()
         })
         .then(exportItems => {
-          this.ProcessingStep++
+          this.ProcessStep++
           return this.CreateHeader(exportItems)
         })
         .then(count => {
-          this.ProcessingStep = 6
+          this.ProcessStep = 6
           if (count > 0) {
             this.ReadyForExport = true
           }
+          this.Processing = false
         })
         .catch(error => {
           this.ReadyForExport = false
+          this.Processing = false
           Popups.alert(error.message)
         })
     },
 
     Download () {
-      // ブラウザでの動作にあわせて実装 electron では !要rewrite!
+      // ブラウザの機能でダウンロードさせる. electronでは要検討かもしれない.
       const temporaryElementA = document.createElement('A')
       temporaryElementA.href = URL.createObjectURL(new Blob([this.OutputString]), { type: 'application/json' })
       temporaryElementA.download = 'joed-data.json'
@@ -149,27 +156,19 @@ export default {
     //
     // インポートデータ( Imported )で特になんの問題も無くインポートできたもの以外には Notification がある
     CheckImported () {
-      const DatabaseInstance = this.$store.state.DatabaseInstance
+      const query = {
+        DocumentId: { $gt: 0 },
+        Imported: { $exists: true },
+        Notification: { $exists: true }
+      }
+      if (this.ExportYear !== '') {
+        const reg = new RegExp('^' + this.ExportYear + '-')
+        query.DateOfProcedure = { $regex: reg }
+      }
 
-      return new Promise((resolve) => { resolve() })
-        .then(_ => {
-          return new Promise((resolve, reject) => {
-            const selector = {
-              DocumentId: { $gt: 0 },
-              Imported: { $exists: true },
-              Notification: { $exists: true }
-            }
-            if (this.ExportYear !== '') {
-              const reg = new RegExp('^' + this.ExportYear + '-')
-              selector.DateOfProcedure = { $regex: reg }
-            }
-
-            DatabaseInstance.count(selector, (error, count) => {
-              if (error) { reject(error) }
-              if (count > 0) { reject(new Error('未確認の読み込みデータがあります.')) }
-              resolve()
-            })
-          })
+      return this.$store.dispatch('dbCount', { Query: query })
+        .then(count => {
+          if (count > 0) { return Promise.reject(new Error('未確認のデータがあります.')) }
         })
     },
     // Step 3 - データの妥当性検証
@@ -178,89 +177,61 @@ export default {
     //  必須項目の有無
     //  項目の重複(ditto含む)
     CheckConsistency () {
-      // マーキングを含む作業にはDocumentIdではなく、indexされている_idを使用する.
-      function CheckConsistencies (documentids, numberOfpool = 10) {
-        const idPool = Object.assign([], documentids)
-        const sources = idPool.splice(0, numberOfpool)
-
+      function CheckConsistencies (documentids) {
         const ErrorsOfDocument = []
 
-        const query = { _id: { $in: [...sources] } }
-        console.log('Query is ' + JSON.stringify(query))
-
-        return new Promise((resolve, reject) => {
-          DatabaseInstance
-            .find(query)
-            .exec((error, querydoc) => {
-              if (error) reject(new Error('データベースエラーです.'))
-              resolve(querydoc)
-            })
-        }).then(documents => {
-          return Promise.all(
-            documents.map(
-              item => new Promise(resolve => {
-                ValidateCase(item)
-                  .catch(error =>
-                    ErrorsOfDocument.push({
-                      _id: item._id,
-                      message: error
-                    })
-                  )
-                  .then(_ =>
-                    resolve()
-                  )
+        return this.$store
+          .dispatch('dbFind', {
+            Query: { DocumentId: { $in: [...documentids] } }
+          }).then(documents =>
+            documents.forEach(item => ValidateCase(item)
+              .catch(error => {
+                ErrorsOfDocument.push({
+                  DocumentId: item.DocumentId,
+                  Message: error
+                })
+                Promise.resolve()
               })
             )
-          )
-        }).then(_ => {
-          if (idPool.length > 0) {
-            return CheckConsistencies(idPool, numberOfpool)
-              .then(SecondDocuments => {
-                return new Promise(resolve => resolve([...ErrorsOfDocument, ...SecondDocuments]))
-              })
-          }
-          return new Promise(resolve => resolve(ErrorsOfDocument))
-        }).then(DocumentList => {
-          return new Promise(resolve => resolve(DocumentList))
-        })
+          ).then(_ => Promise.resolve(ErrorsOfDocument))
       }
 
       function SetNotificationField (documents) {
         const details = documents.pop()
         if (details) {
-          DatabaseInstance.update(
-            { _id: details._id },
-            { $set: { Notification: details.message } },
-            {},
-            _ => SetNotificationField(documents)
-          )
+          return this.$store.dispatch('dbUpdate', {
+            Query: { DocumentId: details.DocumentId },
+            Update: { $set: { Notification: details.Message } }
+          })
+            .then(_ => SetNotificationField(documents))
+        } else {
+          return Promise.resolve()
         }
       }
 
-      const DatabaseInstance = this.$store.state.DatabaseInstance
-      const selector = {
+      // 選択クエリ
+      const query = {
         DocumentId: { $gt: 0 }
       }
+      if (this.ExportYear !== '') {
+        const reg = new RegExp('^' + this.ExportYear + '-')
+        query.DateOfProcedure = { $regex: reg }
+      }
+
       // let ProgressStep = 1
       this.ProgressStepThree = 0
 
-      return new Promise((resolve, reject) => resolve())
-        .then(_ => {
-          return new Promise((resolve, reject) => {
-            if (this.ExportYear !== '') {
-              const reg = new RegExp('^' + this.ExportYear + '-')
-              selector.DateOfProcedure = { $regex: reg }
-            }
-
-            DatabaseInstance
-              .find(selector)
-              .projection({ _id: 1 })
-              .exec((error, documents) => {
-                if (error) reject(error)
-                if (documents.length > 0) resolve(documents.map(item => item._id))
-                reject(new Error('エクスポートの対象がありません.'))
-              })
-          })
+      return this.$store.dispatch('dbFind',
+        {
+          Query: query,
+          Projection: { DocumentId: 1 }
+        })
+        .then(documents => {
+          if (documents.length === 0) {
+            Promise.reject(new Error('エクスポートの対象がありません.'))
+          } else {
+            Promise.resolve(documents.map(item => item.DocumentId))
+          }
         })
         .then(documentids => {
           return CheckConsistencies(documentids)
@@ -269,16 +240,16 @@ export default {
           return new Promise((resolve, reject) => {
             const errorcount = ErrorsOfDocument.length
             if (errorcount > 0) {
-              SetNotificationField(ErrorsOfDocument)
-              reject(
-                new Error(
-                  'データ検証で' +
-                  errorcount +
-                  '件のエラーが確認されました.\n該当するデータの修正を御願いします.'
-                )
-              )
+              return SetNotificationField(ErrorsOfDocument)
+                .then(_ => reject(
+                  new Error(
+                    'データ検証で' +
+                    errorcount +
+                    '件のエラーが確認されました.\n該当するデータの修正を御願いします.'
+                  )
+                ))
             } else {
-              resolve()
+              return resolve()
             }
           })
         })
@@ -286,27 +257,20 @@ export default {
     // Step 4 - データの整形
     //
     CreateExportData () {
-      const DatabaseInstance = this.$store.state.DatabaseInstance
-
       this.ProgressStepFour = 0
 
       return new Promise((resolve) => { resolve() })
         .then(_ => {
-          return new Promise((resolve, reject) => {
-            const selector = {
-              DocumentId: { $gt: 0 }
-            }
-            if (this.ExportYear !== '') {
-              const reg = new RegExp('^' + this.ExportYear + '-')
-              selector.DateOfProcedure = { $regex: reg }
-            }
-
-            DatabaseInstance.find(selector)
-              .sort({ DocumentId: 1 })
-              .exec((error, documents) => {
-                if (error) reject(error)
-                resolve(documents)
-              })
+          const query = {
+            DocumentId: { $gt: 0 }
+          }
+          if (this.ExportYear !== '') {
+            const reg = new RegExp('^' + this.ExportYear + '-')
+            query.DateOfProcedure = { $regex: reg }
+          }
+          return this.$store.dispatch('dbFind', {
+            Query: query,
+            Sort: { DocumentId: 1 }
           })
         })
         .then(documents => {
@@ -361,3 +325,14 @@ export default {
   }
 }
 </script>
+
+<style lang="sass">
+div#preview
+  position: relative
+  height: 80vh
+  overflow-y: scroll
+  margin: 4rem
+  padding: 1rem
+  border: 2px solid var(--color-text-primary)
+  background: var(--background-color-list)
+</style>

@@ -25,31 +25,34 @@
 
     <div class="subtitle-section">表示する内容</div>
     <div class="menu-item-content" id="display-item-selection">
-      <div><label><input type="checkbox" v-model="isFilterItemsEmpty">全て表示する</label></div>
+      <div><el-checkbox v-model="isFilterItemsEmpty">全て表示する</el-checkbox></div>
 
-      <div>
-        <div>カテゴリー</div>
+      <el-checkbox-group v-model="FilterItems">
         <div>
-          <template v-for="category in Categories">
-            <label :key="category"><input type="checkbox" v-model="FilterItems" :value="{ Field: 'TypeOfProcedure', Value: category }">{{category}}</label>
-          </template>
+          <div>カテゴリー</div>
+          <div>
+            <template v-for="(value, category) in Categories">
+              <el-checkbox :key="category" :label="category"></el-checkbox>
+            </template>
+          </div>
         </div>
-      </div>
 
-      <div>
-        <div>年次</div>
-        <div v-for="item in FilterYears" :key="item">
-          <label><input type="checkbox" v-model="FilterItems" :value="{ Field: 'DateOfProcedure', Value: item }">{{item + '年'}}</label>
-        </div>
-      </div>
-
-      <div>
-        <div>情報</div>
         <div>
-          <label><input type="checkbox" v-model="FilterItems" :value="{ Field: 'PresentAE', Value: true }">合併症あり</label>
-          <label><input type="checkbox" v-model="FilterItems" :value="{ Field: 'Notification', Value: { $exists: true } }">エラーあり</label>
+          <div>年次</div>
+          <div v-for="(value, year) in FilterYears" :key="year">
+            <el-checkbox :label="year"></el-checkbox>
+          </div>
         </div>
-      </div>
+
+        <div>
+          <div>情報</div>
+          <div>
+            <template v-for="(value, condition) in Conditions">
+              <el-checkbox :key="condition" :label="condition"></el-checkbox>
+            </template>
+          </div>
+        </div>
+      </el-checkbox-group>
     </div>
     <div class="menu-item-bottom">
       <el-button type="primary" @click="Apply()">設定</el-button>
@@ -65,22 +68,34 @@ export default {
   name: 'DisplaySettingMenu',
   data () {
     return ({
-      Categories: Object.keys(CategoryTranslation),
+      Categories: {},
+      // 年次: created()で非同期にロードされる
+      FilterYears: {},
+      Conditions: {
+        合併症あり: { Field: 'PresentAE', Value: true },
+        要確認: { Field: 'Imported', Value: true },
+        エラーあり: { Field: 'Notification', Value: { $exists: true } }
+      },
+      FilterItems: [],
       Sort: {
         Item: 'DocumentId',
         Order: -1
-      },
-      FilterItems: [],
-      // 年次: created()で非同期にロードされる
-      FilterYears: []
+      }
     })
   },
   created () {
+    // dataの初期化
+    Object.keys(CategoryTranslation).forEach(categorylabel => {
+      this.$set(this.Categories, categorylabel, { Field: 'TypeOfProcedure', Value: categorylabel })
+    })
     this.$store.dispatch('GetYears').then((CountByYear) => {
-      this.FilterYears.splice(0, 0, ...Object.keys(CountByYear))
+      Object.keys(CountByYear).forEach(year => {
+        this.$set(this.FilterYears, year + '年', { Field: 'DateOfProcedure', Value: year })
+      })
     })
 
-    const preserved = this.$store.getters.GetViewSettings
+    // 現在の表示をロード
+    const preserved = this.$store.getters.ViewSettings
     if (preserved.Sort) {
       Object.assign(this.Sort, preserved.Sort)
     }
@@ -102,7 +117,14 @@ export default {
   },
   methods: {
     Apply () {
-      this.$emit('commit', { Sort: this.Sort, Filter: [...this.FilterItems] })
+      const FilterObjects = []
+      this.FilterItems.forEach(filter => {
+        const filterobj = this.Categories[filter] || this.FilterYears[filter] || this.Conditions[filter]
+        if (filterobj) {
+          FilterObjects.push(filterobj)
+        }
+      })
+      this.$emit('commit', { Sort: this.Sort, Filter: FilterObjects })
     },
     Revert () {
       this.$emit('commit')
