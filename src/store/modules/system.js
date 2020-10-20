@@ -58,21 +58,15 @@ export default {
   },
   actions: {
     LoadPreferences (context) {
-      return new Promise((resolve, reject) => {
-        context.rootState.DatabaseInstance.findOne(
-          { Settings: { $exists: true } }
-        )
-          .exec(
-            (errstring, document) => {
-              if (errstring) reject(errstring)
-
-              if (document !== null) {
-                context.commit('SetPreferences', document.Settings)
-              }
-              resolve()
-            }
-          )
-      })
+      return context.dispatch('dbFindOne', {
+        Query: { Settings: { $exists: true } }
+      },
+      { root: true })
+        .then(settings => {
+          if (settings !== null) {
+            context.commit('SetPreferences', settings.Settings)
+          }
+        })
     },
     SavePreferences (context) {
       const temporaryState = {}
@@ -80,19 +74,12 @@ export default {
         temporaryState[key] = context.state[key]
       }
 
-      return new Promise((resolve, reject) => {
-        context.rootState.DatabaseInstance.update(
-          { Settings: { $exists: true } },
-          { Settings: temporaryState },
-          { upsert: true },
-          (errorstring) => {
-            if (errorstring) {
-              reject(errorstring)
-            }
-            resolve()
-          }
-        )
-      })
+      return context.dispatch('dbUpdate', {
+        Query: { Settings: { $exists: true } },
+        Update: { Settings: temporaryState },
+        Options: { upsert: true }
+      },
+      { root: true })
     },
     SetShowWelcomeMessage (context, value) {
       context.commit('SetPreferences', { ShowWelcomeMessage: value })

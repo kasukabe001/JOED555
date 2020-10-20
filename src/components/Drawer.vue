@@ -39,11 +39,14 @@ export default {
         this.$store.commit('SetViewSettings')
       }
 
-      this.$store.dispatch('ReloadDatastore').then(_ => {
+      this.$store.dispatch('ReloadDocumentList').then(_ => {
+        this.$emit('changed')
         this.$notify({
           title: '表示設定が変更されました',
-          message: this.$store.getters.NumberOfCases + '件表示します.',
-          duration: 3000
+          message: this.$store.getters.NumberOfCases > 0
+            ? this.$store.getters.NumberOfCases + '件表示します.'
+            : '表示する症例がありません.',
+          duration: 2500
         })
       })
     },

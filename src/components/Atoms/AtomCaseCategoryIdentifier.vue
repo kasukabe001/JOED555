@@ -1,5 +1,7 @@
 <template>
-  <div class="casecategory" :class="BadgedClass" :style="BoxColor"></div>
+  <div class="casecategory" :class="NotificationClass" :style="BoxColorStyle">
+    <div :class="MalignancyClass"></div>
+  </div>
 </template>
 
 <script>
@@ -15,7 +17,7 @@ export default {
     }
   },
   computed: {
-    BoxColor () {
+    BoxColorStyle () {
       const colorTable = {
         腹腔鏡: '#8CF700',
         腹腔鏡悪性: '#8CF700',
@@ -24,18 +26,16 @@ export default {
         子宮鏡: '#00BBFF',
         卵管鏡: '#FFD000'
       }
-      return this.notification
-        ? { backgroundColor: colorTable[this.category] }
-        : {
-          backgroundColor: colorTable[this.category],
-          'border-color': 'var(--color-warning)'
-        }
+      return { backgroundColor: colorTable[this.category] }
     },
-    BadgedClass () {
+    NotificationClass () {
+      return this.notification ? 'has-notification' : ''
+    },
+    MalignancyClass () {
       switch (this.category) {
         case '腹腔鏡悪性':
         case 'ロボット悪性':
-          return 'badged'
+          return 'category-malignancy'
         default:
           return ''
       }
@@ -52,7 +52,20 @@ div.casecategory
   width: 1.7rem
   height: 1.7rem
 
-div.badged::after
+div.has-notification::after
+  position: absolute
+  content: ""
+  background: transparent
+  left: 0
+  top: 0
+  width: 0
+  height: 0
+  border-top: 0.38rem solid var(--color-warning)
+  border-left: 0.38rem solid var(--color-warning)
+  border-right: 0.38rem solid transparent
+  border-bottom: 0.38rem solid transparent
+
+div.category-malignancy::after
   position: absolute
   content: ""
   background: transparent
@@ -60,8 +73,8 @@ div.badged::after
   bottom: 0
   width: 0
   height: 0
-  border-top: 0.45rem solid transparent
-  border-left: 0.45rem solid transparent
-  border-right: 0.45rem solid var(--color-danger)
-  border-bottom: 0.45rem solid var(--color-danger)
+  border-top: 0.38rem solid transparent
+  border-left: 0.38rem solid transparent
+  border-right: 0.38rem solid var(--color-danger)
+  border-bottom: 0.38rem solid var(--color-danger)
 </style>

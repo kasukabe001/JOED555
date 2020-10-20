@@ -1,8 +1,8 @@
 <template>
   <div style="width: 900px;">
-    <div class="title-section">merge/CSVファイルからのデータ読み込み</div>
+    <div class="title-section">mergeファイルからのデータ読み込み</div>
     <div>
-      過去の症例登録システムで生成されたmergeファイルから症例データを読み込むことが出来ます.<br/>
+      症例登録システムver.4で生成されたmergeファイルから症例データを読み込むことが出来ます.<br/>
       システムの大幅な変更に伴い,データの修正は必ず必要になります.併せて以下の制限がありますがご了承ください.<br/>
       <ul>
         <li>この処理で読み込まれたデータについては, 全て編集と確認が必要になります.</li>
@@ -12,11 +12,11 @@
     <div>
       <InputFile @change="LoadFile"></InputFile>
       <el-button type="primary" :disabled="InFile.length <= 0" @click="ProcessFile()">読み込みを開始</el-button>
-      <el-button type="primary" :disabled="!ReadyToRegister" :loading="Processing" @click="CommitImported">読み込まれたデータの登録</el-button>
+      <el-button type="primary" :disabled="!ReadyToRegister" :loading="Processing" @click="CommitImported">読み込んだデータの登録</el-button>
     </div>
 
     <el-collapse-transition>
-      <div class="export-progression" v-if="ProcessStep">
+      <div class="export-progression" v-show="ProcessStep">
         <el-steps :active="ProcessStep" process-status="warning" finish-status="success" direction="vertical" space="42px">
           <el-step title="入力ファイルのフォーマット検証とフィールドの割り当て">
             <template #description>
@@ -46,7 +46,7 @@
 import InputFile from '@/components/Molecules/InputFile'
 import TheWrapper from '@/components/Atoms/AtomTheWrapper'
 import { phraseTitledCSV, CreateDocument } from '@/modules/CSVimporter'
-import Popups from '@/modules/serve/Popups'
+import Popups from 'depmodules/Popups'
 
 export default {
   name: 'ViewImport',
@@ -72,7 +72,7 @@ export default {
         this.FileIsLabeled = !records[0].ID
         Object.assign(this.InFile, records)
       } else {
-        Popups.alert('指定されたファイルは適切なJOED mergeファイルではありません.')
+        Popups.alert('指定されたファイルは適切な JOED ver 4 の mergeファイルではありません.')
         this.ReadyToRegister = false
       }
       this.ProcessStep = 0

@@ -1,6 +1,6 @@
 import Vue from 'vue'
 import Vuex from 'vuex'
-import * as NedbAccess from '@/modules/serve/NedbAccess'
+import * as NedbAccess from 'depmodules/NedbAccess'
 import system from '@/store/modules/system'
 import password from '@/store/modules/passwordauth'
 
@@ -20,7 +20,8 @@ const store = new Vuex.Store({
     DatabaseInstance: undefined,
     DocumentIds: {
       List: [], // queryされたuidの全リスト
-      Range: 0 // 表示対象のuidの数
+      Range: 0, // 表示対象のuidの数
+      Identifier: 0 // 表示クエリ変更のシリアル値
     },
     DataStore: [], // インメモリのデータベースレプリケーション
     // 以下データベースリストのクエリの待避
@@ -49,29 +50,35 @@ const store = new Vuex.Store({
     PagedUids (state) {
       return state.DocumentIds.List.slice(0, state.DocumentIds.Range)
     },
-    // 現在表示されているドキュメントの DocumentId を配列で返す.
+    // 現在表示されているドキュメントの数
     //
     PagedUidsRange (state) {
       return state.DocumentIds.Range
+    },
+    // 現在表示対象のドキュメントリストのシリアル値
+    //
+    DisplayIdentifier (state) {
+      return state.DocumentIds.Identifier
     },
     // 現在queryで設定されているドキュメントの数を返す.
     //
     NumberOfCases (state) {
       return state.DocumentIds.List.length
     },
-    // 指定された DocumentId の {Array} [前の DocumentId, 後の DocumentId] を返す.
+    // 指定された DocumentId の前後の DocumentId を返す.
     // 存在しないものは 0.
     //
     NextUids (state, getters) {
-      return function (Uid) {
-        if (Uid === 0) {
-          return [0, 0]
+      return function (currentUid) {
+        const index = state.DocumentIds.List.indexOf(currentUid)
+        if (currentUid === 0 || index === -1) {
+          return { Prev: 0, Next: 0 }
         } else {
           const listlength = state.DocumentIds.List.length
-          const index = state.DocumentIds.List.findIndex(item => item === Uid)
-          const prevUid = index === 0 ? 0 : getters.Uids[index - 1]
-          const nextUid = index === listlength - 1 ? 0 : getters.Uids[index + 1]
-          return [prevUid, nextUid]
+          return {
+            Prev: index === 0 ? 0 : getters.Uids[index - 1],
+            Next: index === listlength - 1 ? 0 : getters.Uids[index + 1]
+          }
         }
       }
     },
@@ -111,6 +118,13 @@ const store = new Vuex.Store({
         },
         Database
       )
+    },
+    // DocumentIdsにドキュメントリストを設定する
+    //
+    // @param {Object} DocumentIds
+    SetDocumentIds (state, payload) {
+      state.DocumentIds.List.splice(0, state.DocumentIds.List.length, ...payload.DocumentIds)
+      state.DocumentIds.Identifier++
     },
     // DataStoreにデータベースをキャッシュする.
     //
@@ -268,7 +282,7 @@ const store = new Vuex.Store({
     // DocumentIdリストの更新. データベースの操作後は必ず実行する.
     //
     // @Param {Object} Filter: {field: condition,...}, Sort: {field: order,...}
-    ReloadDatastore (context, payload = {}) {
+    ReloadDocumentList (context, payload = {}) {
       const Query = { DocumentId: { $gt: 0 } }
       const Projection = { DocumentId: 1, _id: 0 }
       const Sort = {}
@@ -282,8 +296,12 @@ const store = new Vuex.Store({
           Projection: Projection
         })
         .then(documents => {
-          context.state.DocumentIds.List.splice(0)
-          documents.forEach(doc => context.state.DocumentIds.List.push(doc.DocumentId))
+          context.commit('SetDocumentIds',
+            {
+              DocumentIds: documents.map(doc => doc.DocumentId)
+            }
+          )
+          context.commit('ClearDocumentListRange')
         })
         .catch(error => error)
     },
@@ -305,7 +323,7 @@ const store = new Vuex.Store({
             context.dispatch('dbFindOne', { Query: { DocumentId: payload.DocumentId }, Projection: { _id: 0 } })
               .then(fetcheddocument => {
                 context.commit('SetDatastore', fetcheddocument)
-                resolve()
+                resolve(0)
               })
               .catch(error => reject(error))
           }
@@ -325,62 +343,70 @@ const store = new Vuex.Store({
             PatientId: payload.PatientId,
             DateOfProcedure: payload.DateOfProcedure
           }
-        }).then(count => {
-          if (count > 0) reject(new Error('同一日に同一IDの症例は登録できません.'))
-          resolve()
-        },
-        error => reject(error))
-      }).then(() => {
-        payload.DocumentId = '__autoid__'
-        return context.dispatch('dbInsert', {
-          Document: payload
-        }).then(_ => {
+        })
+          .then(
+            count => {
+              if (count > 0) reject(new Error('同一日に同一IDの症例は登録できません.'))
+              resolve()
+            },
+            error => reject(error)
+          )
+      })
+        .then(_ => {
+          payload.DocumentId = '__autoid__'
+          return context.dispatch('dbInsert', {
+            Document: payload
+          })
+        })
+        .then(_ => {
           return new Promise((resolve, reject) => {
             let newid = 0
             // 連番付与
             context.dispatch('dbFindOne', {
               Query: { sequence: 'maindb' }
-            }).then(sequencerow => {
-              newid = (sequencerow ? sequencerow.number : 0) + 1
-
-              context.dispatch('dbUpdate', {
-                Query: { sequence: 'maindb' },
-                Update: { sequence: 'maindb', number: newid },
-                Options: { upsert: true }
-              }).then(
-                _ => resolve(newid)
-              ).catch(_ => reject(new Error(ErrorAutonumberFailed)))
-            }).catch(_ => reject(new Error(ErrorAutonumberFailed)))
-          }).then(newid => {
-            // 登録
-            context.dispatch('dbUpdate', {
-              Query: { DocumentId: '__autoid__' },
-              Update: { $set: { DocumentId: newid } },
-              Options: {}
-            }).then(_ => {
-              // 登録完了
-              context.dispatch('ReloadDatastore')
-              context.commit('ClearDocumentListRange')
-              Promise.resolve()
-            }).catch(error => Promise.reject(error))
-          }).catch(error => {
-            // 連番付与登録に失敗した場合仮登録の部分は削除-rollback
-            context.dispatch('dbRemove', {
-              Query: {
-                DocumentId: '__autoid__'
-              },
-              Options: {
-                multi: true
-              }
-            }).then((_, __) => {
-              Promise.reject(error)
             })
+              .then(sequencerow => {
+                newid = (sequencerow ? sequencerow.number : 0) + 1
+
+                context.dispatch('dbUpdate', {
+                  Query: { sequence: 'maindb' },
+                  Update: { sequence: 'maindb', number: newid },
+                  Options: { upsert: true }
+                })
+                  .then(_ => resolve(newid))
+                  .catch(_ => reject(new Error(ErrorAutonumberFailed)))
+              })
+              .catch(_ => reject(new Error(ErrorAutonumberFailed)))
           })
-        }).catch(_ => {
+            .then(newid => {
+              // 登録
+              context.dispatch('dbUpdate', {
+                Query: { DocumentId: '__autoid__' },
+                Update: { $set: { DocumentId: newid } },
+                Options: {}
+              })
+                // 登録完了
+                .then(_ => context.dispatch('ReloadDocumentList'))
+                .catch(error => Promise.reject(error))
+            })
+            .catch(error => {
+              // 連番付与登録に失敗した場合仮登録の部分は削除-rollback
+              context.dispatch('dbRemove', {
+                Query: {
+                  DocumentId: '__autoid__'
+                },
+                Options: {
+                  multi: true
+                }
+              }).then(_ => {
+                Promise.reject(error)
+              })
+            })
+        })
+        .catch(_ => {
           // Insertに失敗
           return Promise.reject(new Error('データベースエラーです.'))
         })
-      })
     },
 
     // 症例データの更新. Case.DocumentId をキーとするため、有効な DocumentId であることが必須.
@@ -388,29 +414,32 @@ const store = new Vuex.Store({
     //
     // @param {Object} オブジェクトCase
     ReplaceDocument (context, payload) {
-      return new Promise((resolve, reject) => {
-        if (payload.DocumentId <= 0) reject(new Error('内部IDの指定に問題があります.'))
-        context.dispatch('dbFind', {
-          Query: {
-            PatientId: payload.PatientId,
-            DateOfProcedure: payload.DateOfProcedure
-          },
-          Projection: { DocumentId: 1 }
-        }).then(documents => {
+      if (payload.DocumentId <= 0) {
+        return Promise.reject(new Error('内部IDの指定に問題があります.'))
+      }
+      return context.dispatch('dbFind', {
+        Query: {
+          PatientId: payload.PatientId,
+          DateOfProcedure: payload.DateOfProcedure
+        },
+        Projection: { DocumentId: 1 }
+      })
+        .then(documents => {
           for (const document of documents) {
-            if (document.DocumentId !== payload.DocumentId) reject(new Error('同一日に同一IDの症例は登録できません.'))
+            if (document.DocumentId !== payload.DocumentId) {
+              return Promise.reject(new Error('同一日に同一IDの症例は登録できません.'))
+            }
           }
-          context.dispatch('dbUpdate', {
+          return context.dispatch('dbUpdate', {
             Query: { DocumentId: payload.DocumentId },
             Update: payload,
             Options: {}
-          }).then(_ => {
-            context.commit('RemoveDatastore', { DocumentId: payload.DocumentId })
-            context.dispatch('ReloadDatastore')
-            resolve()
           })
-        }).catch(error => reject(error))
-      })
+        })
+        .then(_ => {
+          context.commit('RemoveDatastore', { DocumentId: payload.DocumentId })
+          return context.dispatch('ReloadDocumentList')
+        })
     },
 
     // 症例データの登録. DocumentIdで、新規(===0)・更新(>0)を区別する.
@@ -428,42 +457,38 @@ const store = new Vuex.Store({
     //
     // @param {Object} オブジェクトCase (検索に用いるのは DocumentId のみ)
     RemoveDocument (context, payload) {
-      return new Promise((resolve, reject) => {
-        if (payload.DocumentId <= 0) reject(new Error())
-        context.dispatch('dbRemove', {
-          Query: { DocumentId: payload.DocumentId }
-        }).then(_ => {
-          context.commit('RemoveDatastore', { DocumentId: payload.DocumentId })
-          context.commit('ClearDocumentListRange')
-          context.dispatch('ReloadDatastore')
-          resolve()
-        }).catch(error => reject(error))
+      if (payload.DocumentId <= 0) {
+        return Promise.reject(new Error())
+      }
+      return context.dispatch('dbRemove', {
+        Query: { DocumentId: payload.DocumentId }
       })
+        .then(_ => {
+          context.commit('RemoveDatastore', { DocumentId: payload.DocumentId })
+          return context.dispatch('ReloadDocumentList')
+        })
     },
 
     // 症例データのもつ DateOfProcedure から年次と症例数を集計したobjectを返す(async-promise)
     //
     GetYears (context) {
-      return new Promise((resolve, reject) => {
-        context.dispatch('dbFind',
-          {
-            Query: { DocumentId: { $gt: 0 } },
-            Projection: { DateOfProcedure: 1, _id: 0 },
-            Sort: { DateOfProcedure: -1 }
+      return context.dispatch('dbFind',
+        {
+          Query: { DocumentId: { $gt: 0 } },
+          Projection: { DateOfProcedure: 1, _id: 0 },
+          Sort: { DateOfProcedure: -1 }
 
-          })
-          .then(documents => {
-            const CountByYear = {}
-            for (const document of documents) {
-              const year = document.DateOfProcedure.substring(0, 4)
+        })
+        .then(documents => {
+          const CountByYear = {}
+          for (const document of documents) {
+            const year = document.DateOfProcedure.substring(0, 4)
 
-              if (!CountByYear[year]) CountByYear[year] = 0
-              CountByYear[year]++
-            }
-            resolve(CountByYear)
-          })
-          .catch(error => reject(error))
-      })
+            if (!CountByYear[year]) CountByYear[year] = 0
+            CountByYear[year]++
+          }
+          return Promise.resolve(CountByYear)
+        })
     }
 
   }

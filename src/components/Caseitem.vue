@@ -1,7 +1,7 @@
 <template>
   <div class="caseitem" :id="'case-'+uid" tabindex="0" @dblclick="MoveToEditView()">
     <div class="caseitem-icon">
-      <CategoryIdentifier :category="Category"></CategoryIdentifier>
+      <CategoryIdentifier :category="Category" :notification="Notification"></CategoryIdentifier>
     </div>
     <div class="caseitem-description">
       <div class="caseitem-row">
@@ -14,18 +14,19 @@
       <div class="caseitem-row">
         <span class="w40 truncatable"> {{Diagnosis}} </span>
         <span class="w40 truncatable"> {{Procedure}} </span>
-        <span class="w20" :class="Notification?'caution-badge':''"> {{Notification}} </span>
+        <span class="w20 caution-badge" v-show="PresentAE"> 合併症あり </span>
       </div>
     </div>
     <div class="caseitem-controller">
         <i class="el-icon-loading" v-if="Loading"></i>
-        <i class="el-icon-edit button-font" @click="MoveToEditView()" v-if="!Loading"></i>
+        <i class="el-icon-edit button-font" @click.exact="MoveToEditView()" @click.ctrl.shift="RemoveDocument()" v-if="!Loading"></i>
     </div>
   </div>
 </template>
 
 <script>
 import CategoryIdentifier from '@/components/Atoms/AtomCaseCategoryIdentifier'
+import Popups from 'depmodules/Popups'
 import DbItems from '@/modules/DbItemHandler'
 
 export default {
@@ -82,17 +83,23 @@ export default {
     Procedure () {
       return this.Loading ? '' : DbItems.getItemValue(this.ItemDocument.Procedures[0])
     },
+    PresentAE () {
+      return !this.Loading && this.ItemDocument.PresentAE
+    },
     Notification () {
-      return !this.Loading && this.ItemDocument.PresentAE ? '合併症あり' : ''
+      return !this.Loading && this.ItemDocument.Notification
     }
   },
   methods: {
-    LoadItem () {
-
-    },
     MoveToEditView () {
       if (!this.Loading) {
         this.$router.push({ name: 'edit', params: { uid: this.uid } })
+      }
+    },
+    RemoveDocument () {
+      if (Popups.confirm('この症例を削除します.よろしいですか?')) {
+        this.Loading = true
+        this.$store.dispatch('RemoveDocument', { DocumentId: this.uid })
       }
     }
   },
@@ -138,6 +145,7 @@ div.caseitem-controller
   background-color: red
   color: white
   text-align: center
+  padding-top: 0.125rem
   font-size: 0.9rem
 .button-font
   font-size: 1.4rem

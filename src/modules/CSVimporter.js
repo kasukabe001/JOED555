@@ -132,50 +132,6 @@ function ProcedureTime (Record, CaseData) {
   throw RecordError
 }
 
-function laparoProcedure (procedure = '', typedprocedure = '', typeofselection = '', lymphadnectomy, omentectomy) {
-  const category = procedure.includes('ロボット') ? 'ロボット' : '腹腔鏡'
-
-  const temporaryObject = {}
-  if (procedure) {
-    temporaryObject.Chain = [category + typeofselection]
-  }
-  if (procedure === 'その他') {
-    temporaryObject.Text = typedprocedure
-    temporaryObject.UserTyped = true
-  } else {
-    temporaryObject.Text = procedure
-    if (lymphadnectomy) {
-      if (!(lymphadnectomy.includes('なし') && (lymphadnectomy.includes('－') || lymphadnectomy.includes('-')))) {
-        if (!procedure.includes('リンパ節')) {
-          temporaryObject.Description = lymphadnectomy
-        } else {
-          temporaryObject.AdditionalProcedure = {
-            Text: category === 'ロボット' ? 'ロボット支援下リンパ節生検・郭清' : '腹腔鏡下リンパ節生検・郭清',
-            Description: lymphadnectomy
-          }
-        }
-      }
-    }
-    if (omentectomy) {
-      temporaryObject.Description = omentectomy
-    }
-  }
-  return temporaryObject
-}
-
-function handleUserTyped (category, item, typeditem) {
-  return item !== 'その他'
-    ? {
-      Chain: [category],
-      Text: item
-    }
-    : {
-      Chain: [category],
-      Text: typeditem,
-      UserTyped: true
-    }
-}
-
 function DiagnosesAndProceduresPrimary (Record, CaseData) {
   CaseData.Diagnoses = []
   CaseData.Procedures = []
@@ -273,4 +229,70 @@ function AEs (Record, CaseData) {
   } else {
     throw RecordError
   }
+}
+function CharacterReplacer (str = '') {
+  const replaceTable = {
+    '（': '(',
+    '）': ')',
+    '、': ',',
+    '，': ','
+  }
+  return str.toString().replace(
+    /[（）、，]/g,
+    c => {
+      return replaceTable[c] || c
+    })
+}
+
+function laparoProcedure (procedure = '', typedprocedure = '', typeofselection = '', lymphadnectomy, omentectomy) {
+  const category = procedure.includes('ロボット') ? 'ロボット' : '腹腔鏡'
+  const translation = {
+    lymph: {
+      'なし（SN生検－）': 'なし(センチネル生検なし)$',
+      'なし（SN生検＋）': 'なし(センチネル生検あり)',
+      PLN: 'PLN',
+      PAN: 'PAN',
+      'PLN＋PAN': 'PLN+PAN'
+    },
+    omentum: {
+      大網生検あり: '[大網切除・生検]あり',
+      大網生検なし: '[大網切除・生検]なし'
+    }
+  }
+
+  const temporaryObject = {}
+  if (procedure.trim()) {
+    temporaryObject.Chain = [category + typeofselection.trim()]
+  }
+  if (procedure.trim() === 'その他') {
+    temporaryObject.Text = typedprocedure.trim()
+    temporaryObject.UserTyped = true
+  } else {
+    temporaryObject.Text = CharacterReplacer(procedure.trim())
+    if (lymphadnectomy) {
+      if (translation.lymph[lymphadnectomy.trim()] && translation.lymph[lymphadnectomy.trim()].substr(-1, 1) !== '$') {
+        temporaryObject.AdditionalProcedure = {
+          Text: category === 'ロボット' ? 'ロボット支援下リンパ節生検・郭清' : '腹腔鏡下リンパ節生検・郭清',
+          Description: [translation.lymph[lymphadnectomy.trim()]]
+        }
+      }
+    }
+    if (omentectomy.trim() && translation.omentum[omentectomy.trim()]) {
+      temporaryObject.Description = translation.omentum[omentectomy.trim()]
+    }
+  }
+  return temporaryObject
+}
+
+function handleUserTyped (category, item, typeditem) {
+  return item !== 'その他'
+    ? {
+      Chain: [category.trim()],
+      Text: CharacterReplacer(item.trim())
+    }
+    : {
+      Chain: [category.trim()],
+      Text: typeditem.trim(),
+      UserTyped: true
+    }
 }

@@ -1,5 +1,7 @@
 <template>
   <div>
+    <WelcomeBanner v-if="ShowWelcomeBanner"></WelcomeBanner>
+
     <DrawerButton div-class="open-drawer" tab-index="0" @click="OpenDrawer" accesskey="D"/>
     <el-drawer
       title="MenuDrawer"
@@ -8,19 +10,17 @@
       :with-header="false"
       :destroy-on-close="true"
       :visible.sync="showMenuDrawer">
-      <Drawer @close="CloseDrawer"></Drawer>
+      <Drawer @close="CloseDrawer" @changed="FilterChanged"></Drawer>
     </el-drawer>
     <NewEntryButton div-class="list-new-entry" tab-index="0" @click="CreateNewEntry()" accesskey="N"/>
 
     <div class="itemlist">
       <Caseitem v-for="uid in Uids" :key="uid" :uid="uid" />
-      <InfiniteLoading @infinite="HandleInfinite">
+      <InfiniteLoading @infinite="HandleInfinite" :identifier="DisplayIdentifier" ref="infiniteloading">
         <span slot="no-more"></span>
         <span slot="no-results"></span>
       </InfiniteLoading>
     </div>
-
-    <WelcomeBanner v-if="ShowWelcomeBanner"></WelcomeBanner>
 
     <router-view></router-view>
   </div>
@@ -61,6 +61,9 @@ export default {
     },
     ShowWelcomeBanner () {
       return this.$store.state.ShowWelcomeBanner
+    },
+    DisplayIdentifier () {
+      return this.$store.getters.DisplayIdentifier
     }
   },
   methods: {
@@ -75,11 +78,14 @@ export default {
     },
     HandleInfinite (state) {
       this.$store.commit('IncrementDocumentListRange')
-      if (this.$store.getters.PagedUidsRange === this.$store.getters.NumberOfCases) {
+      if (this.$store.getters.PagedUidsRange >= this.$store.getters.NumberOfCases) {
         state.complete()
       } else {
         state.loaded()
       }
+    },
+    FilterChanged () {
+      // nop this.$refs.infiniteloading.$emit('$InfiniteLoading:reset')
     }
   }
 }
